@@ -49,7 +49,7 @@ namespace Schafkopf.Hubs
                     await Clients.Client(connectionId).SendAsync("CloseAnnounceModal");
                 }
                 game.GameState.Announce(wantToPlay);
-                game.GameState.ActionPlayer = (game.GameState.ActionPlayer + 1) % 4;
+                game.GameState.IncrementActionPlayer();
                 await game.SendPlayers(this);
                 if (game.GameState.PlayingPlayers.All(p => p.WantToPlayAnswered))
                 {
@@ -140,7 +140,7 @@ namespace Schafkopf.Hubs
                     return;
                 }
                 game.GameState.AnnounceGameType(gameType);
-                game.GameState.ActionPlayer = (game.GameState.ActionPlayer + 1) % 4;
+                game.GameState.IncrementActionPlayer();
                 await game.SendPlayers(this);
                 await game.SendAskForGameType(this);
                 foreach (String connectionId in player.GetConnectionIdsWithSpectators())

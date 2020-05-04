@@ -119,7 +119,7 @@ namespace Schafkopf.Models
                         GameState.Leader = GameState.PlayingPlayers[GameState.ActionPlayer];
                     }
                 }
-                GameState.ActionPlayer = (GameState.ActionPlayer + 1) % 4;
+                GameState.IncrementActionPlayer();
             }
             GameState.ActionPlayer = GameState.PlayingPlayers.IndexOf(GameState.Leader);
         }
@@ -128,7 +128,7 @@ namespace Schafkopf.Models
         {
             GameState.CurrentGameState = State.Playing;
             await SendPlayerIsPlayingGameTypeAndColor(hub, GetPlayingPlayersConnectionIds());
-            FindTeams();
+            GameState.FindTeams();
             GameState.ActionPlayer = GameState.PlayingPlayers.IndexOf(GameState.Players[GameState.StartPlayer]);
             GameState.NewTrick();
             await SendPlayers(hub);
@@ -194,63 +194,6 @@ namespace Schafkopf.Models
             }
         }
 
-        private void FindTeams()
-        {
-            //Set up the team combination
-            for (int i = 0; i < 4; i++)
-            {
-                if (GameState.AnnouncedGame == GameType.Ramsch)
-                {
-                    GameState.Groups[i] = 0;
-                }
-                else if (GameState.AnnouncedGame == GameType.Sauspiel)
-                {
-                    if (GameState.PlayingPlayers[i] == GameState.Leader)
-                    {
-                        GameState.Groups[i] = 1;
-                    }
-                    else
-                    {
-                        foreach (Card c in GameState.PlayingPlayers[i].GetHandCards())
-                        {
-                            if (c.Number == 11 && c.Color == GameState.Leader.AnnouncedColor)
-                            {
-                                GameState.Groups[i] = 1;
-                                break;
-                            }
-                            else
-                            {
-                                GameState.Groups[i] = 0;
-                            }
-                        }
-                    }
-                }
-                else if (GameState.AnnouncedGame == GameType.Hochzeit)
-                {
-                    if (GameState.PlayingPlayers[i] == GameState.Leader || GameState.PlayingPlayers[i] == GameState.HusbandWife)
-                    {
-                        GameState.Groups[i] = 1;
-                    }
-                    else
-                    {
-                        GameState.Groups[i] = 0;
-                    }
-                }
-                // Wenz, Farbsolo, WenzTout, FarbsoloTout
-                else if ((int)GameState.AnnouncedGame >= 3)
-                {
-                    if (GameState.PlayingPlayers[i] == GameState.Leader)
-                    {
-                        GameState.Groups[i] = 1;
-                    }
-                    else
-                    {
-                        GameState.Groups[i] = 0;
-                    }
-                }
-            }
-        }
-
         public async Task PlayCard(Player player, Color cardColor, int cardNumber, SchafkopfHub hub)
         {
             if (GameState.CurrentGameState == State.HochzeitExchangeCards && player == GameState.HusbandWife)
@@ -298,7 +241,7 @@ namespace Schafkopf.Models
 
             if (GameState.Trick.Count < 4)
             {
-                GameState.ActionPlayer = (GameState.ActionPlayer + 1) % 4;
+                GameState.IncrementActionPlayer();
                 await SendPlayers(hub);
             }
             else
@@ -319,19 +262,7 @@ namespace Schafkopf.Models
             //Show the amount of pointfor each team
             if (GameState.AnnouncedGame > 0)
             {
-                int leaderPoints = 0;
-                int followerPoints = 0;
-                for (int i = 0; i < 4; i++)
-                {
-                    if (GameState.Groups[i] == 0)
-                    {
-                        followerPoints += GameState.PlayingPlayers[i].Balance;
-                    }
-                    else
-                    {
-                        leaderPoints += GameState.PlayingPlayers[i].Balance;
-                    }
-                }
+                (int leaderPoints, int followerPoints) = GameState.GetFinalPoints();
                 string gameOverTitle = "";
                 if (leaderPoints <= 60)
                 {
@@ -599,7 +530,7 @@ namespace Schafkopf.Models
                     }
                     return;
                 }
-                GameState.ActionPlayer = (GameState.ActionPlayer + 1) % 4;
+                GameState.IncrementActionPlayer();
                 await SendPlayers(hub);
             }
             // no one wants to play => it's a ramsch

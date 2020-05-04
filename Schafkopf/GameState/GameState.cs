@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Schafkopf.Hubs;
 using Schafkopf.Models;
 
@@ -9,16 +8,62 @@ namespace Schafkopf.Logic
 {
     public class GameState
     {
+        // internal Gamestate is private, so it can not be accesses by other classes
         private readonly List<PlayerState> _Players = new List<PlayerState>();
         private List<PlayerState> _PlayingPlayers = new List<PlayerState>();
-        public readonly Carddeck Carddeck = new Carddeck();
-        public State CurrentGameState = State.Idle;
-        public int[] Groups = new int[] { 0, 0, 0, 0 };
-        public int StartPlayer = -1;
-        public int ActionPlayer = -1;
-        public bool NewGame = false;
-        public GameType AnnouncedGame = GameType.Ramsch;
+        private readonly Carddeck _Carddeck = new Carddeck();
+        private State _CurrentGameState = State.Idle;
+        private int[] _Groups = new int[] { 0, 0, 0, 0 };
+        private int _StartPlayer = -1;
+        private int _ActionPlayer = -1;
+        private GameType _AnnouncedGame = GameType.Ramsch;
+        private PlayerState _HusbandWife = null;
         private PlayerState _Leader;
+        private TrickState _Trick = null;
+        private TrickState _LastTrick = null;
+        private int _TrickCount = 0;
+        private readonly object _Lock = new object();
+
+        // public access is either read-only or synchronized through _Lock
+        public int StartPlayer => _StartPlayer;
+        public Trick Trick => _Trick;
+        public Trick LastTrick => _LastTrick;
+        public List<Player> Players => _Players.Cast<Player>().ToList();
+        public List<Player> PlayingPlayers => _PlayingPlayers.Cast<Player>().ToList();
+        public int ActionPlayer
+        {
+            get => _ActionPlayer;
+            set
+            {
+                lock (_Lock)
+                {
+                    _ActionPlayer = value;
+                }
+            }
+        }
+        public GameType AnnouncedGame
+        {
+            get => _AnnouncedGame;
+            set
+            {
+                lock (_Lock)
+                {
+                    _AnnouncedGame = value;
+                }
+            }
+        }
+        public int TrickCount => _TrickCount;
+        public State CurrentGameState
+        {
+            get => _CurrentGameState;
+            set
+            {
+                lock (_Lock)
+                {
+                    _CurrentGameState = value;
+                }
+            }
+        }
         public Player Leader
         {
             get => _Leader;
@@ -37,7 +82,6 @@ namespace Schafkopf.Logic
                 }
             }
         }
-        private PlayerState _HusbandWife = null;
         public Player HusbandWife
         {
             get => _HusbandWife;
@@ -56,14 +100,9 @@ namespace Schafkopf.Logic
                 }
             }
         }
-        private TrickState _Trick = null;
-        private TrickState _LastTrick = null;
-        public int TrickCount = 0;
-        private readonly object _Lock = new object();
-
         public Color GetTrumpColor()
         {
-            switch (AnnouncedGame)
+            switch (_AnnouncedGame)
             {
                 case GameType.Ramsch:
                 case GameType.Sauspiel:
@@ -78,7 +117,30 @@ namespace Schafkopf.Logic
                     return Color.None;
             }
         }
-
+        internal (int leaderPoints, int followerPoints) GetFinalPoints()
+        {
+            int leaderPoints = 0;
+            int followerPoints = 0;
+            for (int i = 0; i < 4; i++)
+            {
+                if (_Groups[i] == 0)
+                {
+                    followerPoints += _PlayingPlayers[i].Balance;
+                }
+                else
+                {
+                    leaderPoints += _PlayingPlayers[i].Balance;
+                }
+            }
+            return (leaderPoints, followerPoints);
+        }
+        internal void IncrementActionPlayer()
+        {
+            lock (_Lock)
+            {
+                _ActionPlayer = (_ActionPlayer + 1) % 4;
+            }
+        }
         public void AddCardToTrick(Card card, Player player)
         {
             lock (_Lock)
@@ -92,7 +154,7 @@ namespace Schafkopf.Logic
         {
             lock (_Lock)
             {
-                _PlayingPlayers[ActionPlayer].Announce(wantToPlay);
+                _PlayingPlayers[_ActionPlayer].Announce(wantToPlay);
             }
         }
 
@@ -104,28 +166,23 @@ namespace Schafkopf.Logic
                 {
                     _LastTrick = _Trick;
                 }
-                _Trick = new TrickState(AnnouncedGame, GetTrumpColor(), ActionPlayer);
+                _Trick = new TrickState(_AnnouncedGame, GetTrumpColor(), _ActionPlayer);
             }
         }
-
-        public Trick Trick => _Trick;
-        public Trick LastTrick => _LastTrick;
-        public List<Player> Players => _Players.Cast<Player>().ToList();
-        public List<Player> PlayingPlayers => _PlayingPlayers.Cast<Player>().ToList();
 
         public void Reset()
         {
             lock (_Lock)
             {
-                CurrentGameState = State.Idle;
-                Groups = new int[] { 0, 0, 0, 0 };
-                AnnouncedGame = GameType.Ramsch;
+                _CurrentGameState = State.Idle;
+                _Groups = new int[] { 0, 0, 0, 0 };
+                _AnnouncedGame = GameType.Ramsch;
                 Leader = null;
                 HusbandWife = null;
                 _Trick = null;
                 _LastTrick = null;
-                TrickCount = 0;
-                ActionPlayer = -1;
+                _TrickCount = 0;
+                _ActionPlayer = -1;
                 _PlayingPlayers = new List<PlayerState>();
 
                 foreach (PlayerState player in _Players)
@@ -139,16 +196,16 @@ namespace Schafkopf.Logic
         {
             lock (_Lock)
             {
-                CurrentGameState = State.AnnounceHochzeit;
+                _CurrentGameState = State.AnnounceHochzeit;
 
                 //New first player
-                StartPlayer = (StartPlayer + 1) % Players.Count;
-                while (!PlayingPlayers.Contains(Players[StartPlayer]))
+                _StartPlayer = (_StartPlayer + 1) % Players.Count;
+                while (!PlayingPlayers.Contains(Players[_StartPlayer]))
                 {
-                    StartPlayer = (StartPlayer + 1) % Players.Count;
+                    _StartPlayer = (_StartPlayer + 1) % Players.Count;
                 }
                 //Shuffle cards
-                Card[] shuffledCards = Carddeck.Shuffle();
+                Card[] shuffledCards = _Carddeck.Shuffle();
                 //Distribute cards to the players
                 //Player 1 gets first 8 cards, Player 2 gets second 8 cards, an so on ...
                 for (int i = 0; i < 4; i++)
@@ -157,8 +214,8 @@ namespace Schafkopf.Logic
                     for (int j = i * 8; j < (i + 1) * 8; j++)
                     {
                         HandCards[j % 8] = shuffledCards[j];
-                        _PlayingPlayers[i].HandCards = new List<Card>(HandCards);
                     }
+                    _PlayingPlayers[i].HandCards = new List<Card>(HandCards);
                 }
             }
         }
@@ -226,7 +283,7 @@ namespace Schafkopf.Logic
         {
             lock (_Lock)
             {
-                PlayerState player = _PlayingPlayers[ActionPlayer];
+                PlayerState player = _PlayingPlayers[_ActionPlayer];
                 player.AnnounceGameType(gameType);
             }
         }
@@ -315,7 +372,67 @@ namespace Schafkopf.Logic
             {
                 PlayerState winner = _Players.Single(p => p.Id == Trick.Winner.Id);
                 winner.AddPoints(Trick.Points);
-                TrickCount++;
+                _TrickCount++;
+            }
+        }
+
+        public void FindTeams()
+        {
+            lock (_Lock)
+            {
+                //Set up the team combination
+                for (int i = 0; i < 4; i++)
+                {
+                    if (_AnnouncedGame == GameType.Ramsch)
+                    {
+                        _Groups[i] = 0;
+                    }
+                    else if (_AnnouncedGame == GameType.Sauspiel)
+                    {
+                        if (PlayingPlayers[i] == Leader)
+                        {
+                            _Groups[i] = 1;
+                        }
+                        else
+                        {
+                            foreach (Card c in PlayingPlayers[i].GetHandCards())
+                            {
+                                if (c.Number == 11 && c.Color == Leader.AnnouncedColor)
+                                {
+                                    _Groups[i] = 1;
+                                    break;
+                                }
+                                else
+                                {
+                                    _Groups[i] = 0;
+                                }
+                            }
+                        }
+                    }
+                    else if (_AnnouncedGame == GameType.Hochzeit)
+                    {
+                        if (PlayingPlayers[i] == Leader || PlayingPlayers[i] == HusbandWife)
+                        {
+                            _Groups[i] = 1;
+                        }
+                        else
+                        {
+                            _Groups[i] = 0;
+                        }
+                    }
+                    // Wenz, Farbsolo, WenzTout, FarbsoloTout
+                    else if ((int)_AnnouncedGame >= 3)
+                    {
+                        if (PlayingPlayers[i] == Leader)
+                        {
+                            _Groups[i] = 1;
+                        }
+                        else
+                        {
+                            _Groups[i] = 0;
+                        }
+                    }
+                }
             }
         }
     }
