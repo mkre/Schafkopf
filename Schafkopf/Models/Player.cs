@@ -14,7 +14,7 @@ namespace Schafkopf.Models
         string Id { get; }
         Color AnnouncedColor { get; }
         int Balance { get; }
-        bool Playing { get; }
+        Playing IsPlaying { get; }
         bool HasBeenAskedToOfferMarriage { get; }
         bool HasAnsweredMarriageOffer { get; }
         bool WantToPlay { get; }
@@ -40,7 +40,7 @@ namespace Schafkopf.Models
         public String _Name = "";
         public String _Id = "";
         private readonly List<String> _connectionIds = new List<String>();
-        public Boolean _Playing = true;
+        public Playing _IsPlaying = Playing.Undecided;
         public Boolean _WantToPlay = false;
         public Boolean _WantToPlayAnswered = false;
         public GameType _AnnouncedGameType = GameType.Ramsch;
@@ -55,7 +55,7 @@ namespace Schafkopf.Models
         public string Id => _Id;
         public Color AnnouncedColor => _AnnouncedColor;
         public int Balance => _Balance;
-        public bool Playing => _Playing;
+        public Playing IsPlaying => _IsPlaying;
         public bool HasBeenAskedToOfferMarriage => _HasAnsweredMarriageOffer;
         public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
         public List<Player> SpectatorsWaitingForApproval => _SpectatorsWaitingForApproval.Cast<Player>().ToList();
@@ -77,7 +77,7 @@ namespace Schafkopf.Models
         {
             HandCards = new List<Card>();
             _Balance = 0;
-            _Playing = true;
+            _IsPlaying = Playing.Undecided;
             _WantToPlay = false;
             _WantToPlayAnswered = false;
             _AnnouncedGameType = GameType.Ramsch;
@@ -300,25 +300,22 @@ namespace Schafkopf.Models
             return false;
         }
 
-        public (bool,string,List<string>) ExchangeCardWithPlayer(Color cardColor, int cardNumber, PlayerState player, SchafkopfHub hub, Game game)
+        public bool ExchangeCardWithPlayer(Color cardColor, int cardNumber, PlayerState player, SchafkopfHub hub, Game game)
         {
-            string message = "";
             foreach (Card card in HandCards)
             {
                 if (card.Color == cardColor && card.Number == cardNumber)
                 {
                     if (card.IsTrump(game.GameState.AnnouncedGame, Color.Herz))
                     {
-                        message = "Du kannst deinem Mitspieler kein Trumpf geben!";
-                        return (false, message, GetConnectionIds());
+                        return false;
                     }
                     player.HandCards.Add(card);
                     HandCards.Remove(card);
                     Card trumpCard = player.HandCards.Single(c => c.IsTrump(game.GameState.AnnouncedGame, Color.Herz));
                     player.HandCards.Remove(trumpCard);
                     HandCards.Add(trumpCard);
-                    message = $"{player._Name} und {_Name} haben eine Karte getauscht";
-                    return (true, message, game.GetPlayingPlayersConnectionIds());
+                    return true;
                 }
             }
             throw new Exception("There is something wrong, the card is not on the hand.");
@@ -330,7 +327,7 @@ namespace Schafkopf.Models
             {
                 foreach (String connectionId in GetConnectionIds())
                 {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du kannst die Herz-Sau nicht suchen!");
+                    await hub.Clients.Client(connectionId).SendAsync("ReceiveError", "Du kannst die Herz-Sau nicht suchen!");
                 }
                 return false;
             }
@@ -343,7 +340,7 @@ namespace Schafkopf.Models
             }
             foreach (String connectionId in GetConnectionIds())
             {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"Du kannst nicht auf die {searchedColor}-Sau spielen!");
+                await hub.Clients.Client(connectionId).SendAsync("ReceiveError", $"Du kannst nicht auf die {searchedColor}-Sau spielen!");
             }
             return false;
         }

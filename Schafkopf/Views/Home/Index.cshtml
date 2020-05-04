@@ -45,11 +45,15 @@
             </div>
 
             <div class="col-3 d-flex flex-column overflow-hidden pr-0">
-                <div id="messagesList" class="flex-grow-1 overflow-auto"></div>
-                <form id="chatInput" class="input-group">
-                    <input type="text" class="form-control" id="messageInput" />
-                    <input class="btn btn-primary" type="submit" id="sendButton" value="Send" />
-                </form>
+              <div class="float-box" style="margin: auto auto 5px 0; width: auto;">
+                <b>Spieler:</b>
+                <span id="players"></span>
+              </div>
+              <div id="messagesList" class="flex-grow-1 overflow-auto"></div>
+              <form id="chatInput" class="input-group">
+                  <input type="text" class="form-control" id="messageInput" />
+                  <input class="btn btn-primary" type="submit" id="sendButton" value="Send" />
+              </form>
             </div>
         </div>
 
@@ -206,6 +210,21 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-primary" data-dismiss="modal">Schließen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade text-dark" id="infoModal" tabindex="-1" role="dialog" >
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Info</h5>
+      </div>
+      <div class="modal-body" id="infoModalBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Ok</button>
       </div>
     </div>
   </div>

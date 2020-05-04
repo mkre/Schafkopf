@@ -29,7 +29,7 @@ namespace Schafkopf.Hubs
                 }
                 foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
                 {
-                    await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"{user} hat {playerToKick.Name} rausgeworfen");
+                    await Clients.Client(connectionId).SendAsync("ReceiveInfo", $"{user} hat {playerToKick.Name} rausgeworfen");
                 }
                 return;
             }
@@ -72,10 +72,6 @@ namespace Schafkopf.Hubs
                     {
                         game.GameState.AnnouncedGame = GameType.Hochzeit;
                         game.GameState.Leader = player;
-                        foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-                        {
-                            await Clients.Client(connectionId).SendAsync("ReceiveChatMessage", player.Name, "Wer will mich heiraten?");
-                        }
                     }
                     await game.SendAskAnnounceHochzeit(this);
                 }
@@ -87,8 +83,6 @@ namespace Schafkopf.Hubs
                         foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
                         {
                             await Clients.Client(connectionId).SendAsync("CloseAnnounceModal");
-                            await Clients.Client(connectionId).SendAsync("ReceiveChatMessage", player.Name, "Ich will!");
-                            await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"{game.GameState.Leader.Name} und {player.Name} haben geheiratet");
                         }
                         game.GameState.CurrentGameState = State.HochzeitExchangeCards;
                         game.GameState.HusbandWife = player;
@@ -135,7 +129,7 @@ namespace Schafkopf.Hubs
                 {
                     foreach (String connectionId in player.GetConnectionIds())
                     {
-                        await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du bist gesperrt!");
+                        await Clients.Client(connectionId).SendAsync("ReceiveError", "Du bist gesperrt!");
                     }
                     return;
                 }
@@ -223,7 +217,7 @@ namespace Schafkopf.Hubs
             {
                 Task asyncTask = game.SendPlayersInfo(this);
             }
-            await Clients.Caller.SendAsync("ReceiveSystemMessage", $"Willkommen zurück {player.Name}");
+            await Clients.Caller.SendAsync("ReceiveSystemMessage", $"Willkommen zurück, {player.Name}!");
             await game.SendPlayers(this);
             if (game.GameState.CurrentGameState != State.Idle)
             {
@@ -255,7 +249,7 @@ namespace Schafkopf.Hubs
             {
                 if (!game.GameState.PlayingPlayers.Contains(player))
                 {
-                    if (game.GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.Playing)).ToList().Count <= 4)
+                    if (game.GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.IsPlaying == Playing.Play)).ToList().Count <= 4)
                     {
                         await game.PlayerPlaysTheGame(player, this);
                     }
@@ -294,7 +288,7 @@ namespace Schafkopf.Hubs
                 }
                 if (error != "")
                 {
-                    await Clients.Caller.SendAsync("ReceiveSystemMessage", $"Error: {error}");
+                    await Clients.Caller.SendAsync("ReceiveError", $"{error}");
                     return;
                 }
                 game.GameState.SetPlayerName(userName, player);
@@ -328,7 +322,7 @@ namespace Schafkopf.Hubs
             }
             if (error != "")
             {
-                await Clients.Caller.SendAsync("ReceiveSystemMessage", $"Error: {error}");
+                await Clients.Caller.SendAsync("ReceiveError", $"Error: {error}");
                 return;
             }
             Context.Items.Add("game", game);
@@ -374,10 +368,6 @@ namespace Schafkopf.Hubs
             Player spectator = game.GameState.DequeueSpectator(player, allow);
             if (allow)
             {
-                foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-                {
-                    await Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"{spectator.Name} schaut jetzt bei {player.Name} zu");
-                }
                 await game.SendUpdatedGameState(spectator, this, player.GetConnectionIds());
             }
             else
@@ -386,8 +376,8 @@ namespace Schafkopf.Hubs
                 foreach (String connectionId in spectator.GetConnectionIds())
                 {
                     await Clients.Client(connectionId).SendAsync(
-                        "ReceiveSystemMessage",
-                        $"Error: {player.Name} will nicht, dass du zuschaust"
+                        "ReceiveError",
+                        $"{player.Name} will nicht, dass du zuschaust"
                     );
                 }
             }

@@ -220,7 +220,7 @@ namespace Schafkopf.Logic
             }
         }
 
-        internal (bool, string, List<string>) ExchangeCardWithPlayer(Player player, Color cardColor, int cardNumber, Player leader, SchafkopfHub hub, Game game)
+        internal bool ExchangeCardWithPlayer(Player player, Color cardColor, int cardNumber, Player leader, SchafkopfHub hub, Game game)
         {
             lock (_Lock)
             {
@@ -230,25 +230,36 @@ namespace Schafkopf.Logic
             }
         }
 
-        internal void SetPlayerPlaying(bool value, Player player)
+        internal void SetPlayerPlaying(Playing value, Player player)
         {
             lock (_Lock)
             {
                 PlayerState playerState = _Players.Single(p => p.Id == player.Id);
-                playerState._Playing = value;
-                if (!_PlayingPlayers.Contains(playerState))
+                playerState._IsPlaying = value;
+
+                if (value == Playing.Play)
                 {
-                    for (int i = 0; i < _PlayingPlayers.Count; i++)
-                    {
-                        if (_Players.IndexOf(_PlayingPlayers[i]) > _Players.IndexOf(playerState))
-                        {
-                            _PlayingPlayers.Insert(i, playerState);
-                            break;
-                        }
-                    }
                     if (!_PlayingPlayers.Contains(playerState))
                     {
-                        _PlayingPlayers.Add(playerState);
+                        for (int i = 0; i < _PlayingPlayers.Count; i++)
+                        {
+                            if (_Players.IndexOf(_PlayingPlayers[i]) > _Players.IndexOf(playerState))
+                            {
+                                _PlayingPlayers.Insert(i, playerState);
+                                break;
+                            }
+                        }
+                        if (!_PlayingPlayers.Contains(playerState))
+                        {
+                            _PlayingPlayers.Add(playerState);
+                        }
+                    }
+                }
+                else if (value == Playing.Pause)
+                {
+                    if (_PlayingPlayers.Contains(playerState))
+                    {
+                        _PlayingPlayers.Remove(playerState);
                     }
                 }
             }
@@ -347,7 +358,7 @@ namespace Schafkopf.Logic
             lock (_Lock)
             {
                 PlayerState playerState = _Players.Single(p => p.Id == player.Id);
-                PlayerState spectatorState = _Players.Single(p => p.Id == player.Id);
+                PlayerState spectatorState = _Players.Single(p => p.Id == spectator.Id);
                 playerState._SpectatorsWaitingForApproval.Enqueue(spectatorState);
             }
         }

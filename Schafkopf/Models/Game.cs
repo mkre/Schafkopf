@@ -25,6 +25,7 @@ namespace Schafkopf.Models
             await SendTakeTrickButton(hub, GetPlayingPlayersConnectionIds());
 
             GameState.Reset();
+            await SendPlayersInfo(hub);
             foreach (Player player in GameState.Players)
             {
                 await player.SendHand(hub);
@@ -198,15 +199,24 @@ namespace Schafkopf.Models
         {
             if (GameState.CurrentGameState == State.HochzeitExchangeCards && player == GameState.HusbandWife)
             {
-                (bool success, string message1, List<string> connsectionIds) =
-                    GameState.ExchangeCardWithPlayer(player, cardColor, cardNumber, GameState.Leader, hub, this);
-                foreach (String connectionId in connsectionIds)
-                {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", message1);
-                }
+                bool success = GameState.ExchangeCardWithPlayer(player, cardColor, cardNumber, GameState.Leader, hub, this);
+
                 if (success)
                 {
+                    foreach (String connectionId in GetPlayingPlayersConnectionIds())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync(
+                            "ReceiveSystemMessage", $"{GameState.HusbandWife.Name} und {GameState.Leader.Name} haben eine Karte getauscht"
+                        );
+                    }
                     await StartGame(hub);
+                }
+                else
+                {
+                    foreach (String connectionId in player.GetConnectionIds())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync("ReceiveError", "Du kannst deinem Mitspieler kein Trumpf geben!");
+                    }
                 }
                 return;
             }
@@ -214,7 +224,7 @@ namespace Schafkopf.Models
             {
                 foreach (String connectionId in player.GetConnectionIds())
                 {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du bist gerade nicht dran!");
+                    await hub.Clients.Client(connectionId).SendAsync("ReceiveError", "Du bist gerade nicht dran!");
                 }
                 return;
             }
@@ -227,7 +237,7 @@ namespace Schafkopf.Models
             {
                 foreach (String connectionId in player.GetConnectionIds())
                 {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", message);
+                    await hub.Clients.Client(connectionId).SendAsync("ReceiveError", message);
                 }
                 return;
             }
@@ -302,7 +312,6 @@ namespace Schafkopf.Models
             }
         }
 
-        #region Player actions
         //-------------------------------------------------
         // Add a player to the game
         // The amount of player is limitless inside a game
@@ -329,8 +338,8 @@ namespace Schafkopf.Models
         {
             if (GameState.PlayingPlayers.Count < 4 && GameState.CurrentGameState == State.Idle)
             {
-                GameState.SetPlayerPlaying(true, player);
-                await SendPlayingPlayersInfo(hub);
+                GameState.SetPlayerPlaying(Playing.Play, player);
+                await SendPlayersInfo(hub);
                 if (GameState.PlayingPlayers.Count == 4)
                 {
                     await DealCards(hub);
@@ -352,24 +361,16 @@ namespace Schafkopf.Models
                 //Sorry, you can not pause the game during the game. You are able to pause afterwards.
                 return;
             }
-            GameState.SetPlayerPlaying(false, player);
-            if (GameState.PlayingPlayers.Contains(player))
+            GameState.SetPlayerPlaying(Playing.Pause, player);
+            await SendPlayersInfo(hub);
+            if (GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.IsPlaying != Playing.Pause)).ToList().Count <= 4)
             {
-                lock (GameState.PlayingPlayers)
-                {
-                    GameState.PlayingPlayers.Remove(player);
-                }
-                await SendPlayingPlayersInfo(hub);
-            }
-            if (GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.Playing)).ToList().Count <= 4)
-            {
-                foreach (Player p in GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.Playing)))
+                foreach (Player p in GameState.Players.Where((p => p.GetConnectionIds().Count > 0 && p.IsPlaying == Playing.Undecided)))
                 {
                     await PlayerPlaysTheGame(p, hub);
                 }
             }
         }
-        #endregion
 
         //-------------------------------------------------
         // Determines the partner for a Marriage (Hochzeit)
@@ -499,7 +500,7 @@ namespace Schafkopf.Models
             foreach (string connectionId in connectionIds)
             {
                 await hub.Clients.Client(connectionId).SendAsync(
-                    "ReceiveSystemMessage",
+                    "ReceiveInfo",
                     "Klicke auf die Karte, die du deinem Mitspieler geben willst."
                 );
             }
@@ -639,27 +640,14 @@ $@"
             }
         }
 
-        public async Task SendPlayingPlayersInfo(SchafkopfHub hub)
-        {
-            if (GameState.Players.Where(p => p.GetConnectionIds().Count > 0).ToList().Count <= 4)
-            {
-                return;
-            }
-            foreach (String connectionId in GetPlayersConnectionIds())
-            {
-                await hub.Clients.Client(connectionId).SendAsync(
-                    "ReceiveSystemMessage",
-                    $"Aktive Spieler: {String.Join(", ", GameState.PlayingPlayers.Where(p => p.GetConnectionIds().Count > 0).Select(p => p.Name))}"
-                );
-            }
-        }
         public async Task SendPlayersInfo(SchafkopfHub hub)
         {
             foreach (String connectionId in GetPlayersConnectionIds())
             {
                 await hub.Clients.Client(connectionId).SendAsync(
-                    "ReceiveSystemMessage",
-                    $"Anwesende Spieler: {String.Join(", ", GameState.Players.Where(p => p.GetConnectionIds().Count > 0).Select(p => p.Name))}"
+                    "ReceivePlayersList",
+                    GameState.Players.Where(p => p.GetConnectionIds().Count > 0).Select(p => p.Name),
+                    GameState.Players.Where(p => p.GetConnectionIds().Count > 0).Select(p => p.IsPlaying == Playing.Play)
                 );
             }
         }

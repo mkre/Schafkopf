@@ -156,6 +156,16 @@ function init() {
     messageList.scrollTop = messageList.scrollHeight;
   });
 
+  connection.on("ReceiveError", function (message) {
+    document.getElementById("errorModalBody").textContent = message;
+    $("#errorModal").modal();
+  });
+
+  connection.on("ReceiveInfo", function (message) {
+    document.getElementById("infoModalBody").textContent = message;
+    $("#infoModal").modal();
+  });
+
   connection.on("AskUsername", function (message) {
     localStorage.removeItem("userId");
     document.getElementById("startModalUserName").value = localStorage.getItem("userName");
@@ -347,6 +357,19 @@ function init() {
     button.textContent = "Erneut beitreten"
     showModal("#reconnectModal");
     connection.stop();
+  });
+
+  connection.on("ReceivePlayersList", function (players, isPlaying) {
+    const playersSpan = document.getElementById("players");
+    playersSpan.innerHTML = "";
+    for (let i = 0; i < players.length; i++) {
+      const player = document.createElement(isPlaying[i] ? "u" : "span");
+      player.textContent = players[i];
+      playersSpan.appendChild(player);
+      if (i < players.length - 1) {
+        playersSpan.innerHTML += ", ";
+      }
+    }
   });
 }
 
