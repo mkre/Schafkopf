@@ -56,7 +56,7 @@ namespace Schafkopf.Models
         public Color AnnouncedColor => _AnnouncedColor;
         public int Balance => _Balance;
         public Playing IsPlaying => _IsPlaying;
-        public bool HasBeenAskedToOfferMarriage => _HasAnsweredMarriageOffer;
+        public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
         public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
         public List<Player> SpectatorsWaitingForApproval => _SpectatorsWaitingForApproval.Cast<Player>().ToList();
 
