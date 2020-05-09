@@ -7,9 +7,8 @@ namespace Schafkopf.Models
 {
     public class Card
     {
-        public Color Color;
-        public int Number;
-        public int TrickValue = 0;
+        public readonly Color Color;
+        public readonly int Number;
 
         public Card(Color color, int number)
         {
@@ -29,7 +28,7 @@ namespace Schafkopf.Models
             return Color + "-" + Number;
         }
 
-        internal int GetValue(GameType gameType, Color trumpf, Card firstCard = null)
+        public int GetValue(GameType gameType, Color trump, Card firstCard = null)
         {
             int value = 0;
             switch (gameType)
@@ -44,11 +43,11 @@ namespace Schafkopf.Models
                         {
                             value = 1000 * Number + (int)Color;
                         }
-                        else if (Color == trumpf && Number == 4)
+                        else if (Color == trump && Number == 4)
                         {
                             value = 500 + 5 * 9 + Number;
                         }
-                        else if (Color == trumpf)
+                        else if (Color == trump)
                         {
                             value = 500 + 5 * Number;
                         }
@@ -96,11 +95,11 @@ namespace Schafkopf.Models
                         {
                             value = 1000 * Number + (int)Color;
                         }
-                        else if (Color == trumpf && Number == 4)
+                        else if (Color == trump && Number == 4)
                         {
                             value = 500 + 5 * 9 + Number;
                         }
-                        else if (Color == trumpf)
+                        else if (Color == trump)
                         {
                             value = 500 + 5 * Number;
                         }
@@ -122,7 +121,7 @@ namespace Schafkopf.Models
             return value;
         }
 
-        internal bool IsTrump(GameType gameType, Color trump)
+        public bool IsTrump(GameType gameType, Color trump)
         {
             return GetValue(gameType, trump) > 500;
         }

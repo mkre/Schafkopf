@@ -8,46 +8,85 @@ using Schafkopf.Hubs;
 
 namespace Schafkopf.Models
 {
-    public class Player
+    public interface Player
+    {
+        string Name { get; }
+        string Id { get; }
+        Color AnnouncedColor { get; }
+        int Balance { get; }
+        Playing IsPlaying { get; }
+        bool HasBeenAskedToOfferMarriage { get; }
+        bool HasAnsweredMarriageOffer { get; }
+        bool WantToPlay { get; }
+        bool WantToPlayAnswered { get; }
+        GameType AnnouncedGameType { get; }
+        List<Player> SpectatorsWaitingForApproval { get; }
+        int HandTrumpCount(GameType gameType, Color trump);
+        Task SendHand(SchafkopfHub hub, GameType gameType = GameType.Ramsch, Color trump = Color.Herz);
+        List<String> GetConnectionIds();
+        List<String> GetConnectionIdsWithSpectators();
+        List<Card> GetHandCards();
+        string GetCurrentInfo(Game game);
+        string GetSpectatorNames();
+        bool IsSauspielPossible();
+        Task<bool> IsSauspielOnColorPossible(Color searchedColor, SchafkopfHub hub);
+        Task AskForApprovalToSpectate(SchafkopfHub hub);
+        bool IsSpectators(Player player);
+    }
+    public class PlayerState : Player
     {
         public List<Card> HandCards = new List<Card>();
-        public int Balance = 0;
-        public String Name = "";
-        public String Id = "";
+        private int _Balance = 0;
+        public String _Name = "";
+        public String _Id = "";
         private readonly List<String> _connectionIds = new List<String>();
-        public Boolean Playing = true;
-        public Boolean WantToPlay = false;
-        public Boolean WantToPlayAnswered = false;
-        public GameType AnnouncedGameType = GameType.Ramsch;
-        public Color AnnouncedColor = Color.None;
-        public List<Player> Spectators = new List<Player>();
-        public Queue<Player> SpectatorsWaitingForApproval = new Queue<Player>();
-        public bool HasBeenAskedToOfferMarriage = false;
-        public bool HasAnsweredMarriageOffer = false;
+        public Playing _IsPlaying = Playing.Undecided;
+        public Boolean _WantToPlay = false;
+        public Boolean _WantToPlayAnswered = false;
+        public GameType _AnnouncedGameType = GameType.Ramsch;
+        public Color _AnnouncedColor = Color.None;
+        public List<PlayerState> Spectators = new List<PlayerState>();
+        public Queue<PlayerState> _SpectatorsWaitingForApproval = new Queue<PlayerState>();
+        public bool _HasBeenAskedToOfferMarriage = false;
+        public bool _HasAnsweredMarriageOffer = false;
         private bool IsRunaway = false;
 
+        public string Name => _Name;
+        public string Id => _Id;
+        public Color AnnouncedColor => _AnnouncedColor;
+        public int Balance => _Balance;
+        public Playing IsPlaying => _IsPlaying;
+        public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
+        public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
+        public List<Player> SpectatorsWaitingForApproval => _SpectatorsWaitingForApproval.Cast<Player>().ToList();
 
-        public Player(String name, String connectionId)
+        public bool WantToPlay => _WantToPlay;
+
+        GameType Player.AnnouncedGameType => _AnnouncedGameType;
+
+        public bool WantToPlayAnswered => _WantToPlayAnswered;
+
+        public PlayerState(String name, String connectionId)
         {
-            Name = name;
+            _Name = name;
             AddConnectionId(connectionId);
-            Id = System.Guid.NewGuid().ToString();
+            _Id = System.Guid.NewGuid().ToString();
         }
 
         public void Reset()
         {
             HandCards = new List<Card>();
-            Balance = 0;
-            Playing = true;
-            WantToPlay = false;
-            WantToPlayAnswered = false;
-            AnnouncedGameType = GameType.Ramsch;
-            AnnouncedColor = Color.None;
-            Spectators = new List<Player>();
-            SpectatorsWaitingForApproval = new Queue<Player>();
+            _Balance = 0;
+            _IsPlaying = Playing.Undecided;
+            _WantToPlay = false;
+            _WantToPlayAnswered = false;
+            _AnnouncedGameType = GameType.Ramsch;
+            _AnnouncedColor = Color.None;
+            Spectators = new List<PlayerState>();
+            _SpectatorsWaitingForApproval = new Queue<PlayerState>();
             IsRunaway = false;
-            HasBeenAskedToOfferMarriage = false;
-            HasAnsweredMarriageOffer = false;
+            _HasBeenAskedToOfferMarriage = false;
+            _HasAnsweredMarriageOffer = false;
         }
 
         //-------------------------------------------------
@@ -55,7 +94,7 @@ namespace Schafkopf.Models
         // Card will be removed from the hand-cards
         // Throw exception in case that a card has been played twice
         //-------------------------------------------------
-        public async Task<Card> PlayCard(Color cardColor, int cardNumber, SchafkopfHub hub, Game game)
+        public (Card, string) PlayCard(Color cardColor, int cardNumber, SchafkopfHub hub, Game game)
         {
             foreach (Card card in HandCards)
             {
@@ -63,15 +102,11 @@ namespace Schafkopf.Models
                 {
                     if (!CanCardBePlayed(game, card))
                     {
-                        foreach (String connectionId in GetConnectionIds())
-                        {
-                            await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Die Karte kannst du gerade nicht spielen!");
-                        }
-                        return null;
+                        string message = "Die Karte kannst du gerade nicht spielen!";
+                        return (null, message);
                     }
                     HandCards.Remove(card);
-                    await SendHand(hub, game.AnnouncedGame, game.Trick.Trump);
-                    return card;
+                    return (card, "");
                 }
             }
             throw new Exception("There is something wrong, the card is not on the hand.");
@@ -80,41 +115,23 @@ namespace Schafkopf.Models
         //-------------------------------------------------
         // Player takes the trick and add its points to his own balance
         //-------------------------------------------------
-        public void TakeTrick(Trick trick)
+        public void AddPoints(int points)
         {
-            int points = trick.Cards[0].getPoints() + trick.Cards[1].getPoints() + trick.Cards[2].getPoints() + trick.Cards[3].getPoints();
-            Balance += points;
+            _Balance += points;
         }
 
-        public async Task Announce(bool wantToPlay, SchafkopfHub hub, Game game)
+        public void Announce(bool wantToPlay)
         {
-            //Message about the players actions
-            WantToPlay = wantToPlay;
-            WantToPlayAnswered = true;
-            foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-            {
-                if (WantToPlay)
-                {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveChatMessage", Name, "ich mag spielen");
-                }
-                else
-                {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveChatMessage", Name, "ich mag nicht spielen");
-                }
-            }
+            _WantToPlay = wantToPlay;
+            _WantToPlayAnswered = true;
         }
 
         //-------------------------------------------------
         // Player can decide what type of Game he is playing
         //-------------------------------------------------
-        internal async Task AnnounceGameType(GameType gameType, SchafkopfHub hub, Game game)
+        public void AnnounceGameType(GameType gameType)
         {
-            AnnouncedGameType = gameType;
-            //Message about the players actions
-            foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-            {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveChatMessage", Name, $"Ich hätte ein {gameType}");
-            }
+            _AnnouncedGameType = gameType;
         }
 
         public void AddConnectionId(String connectionId)
@@ -133,7 +150,7 @@ namespace Schafkopf.Models
         }
         public List<String> GetConnectionIds()
         {
-            return _connectionIds;
+            return _connectionIds.ToList();
         }
         public List<String> GetConnectionIdsWithSpectators()
         {
@@ -156,19 +173,14 @@ namespace Schafkopf.Models
             return Spectators.Aggregate(new List<String>(), (acc, x) => acc.Concat(x.GetConnectionIds()).ToList());
         }
 
-        public async Task AddSpectator(Player player, SchafkopfHub hub, Game game)
+        public void AddSpectator(PlayerState player)
         {
-            foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-            {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"{player.Name} schaut jetzt bei {Name} zu");
-            }
             Spectators.Add(player);
-            await game.SendUpdatedGameState(this, hub, player.GetConnectionIds());
         }
 
         public async Task AskForApprovalToSpectate(SchafkopfHub hub)
         {
-            if (SpectatorsWaitingForApproval.Count == 0)
+            if (_SpectatorsWaitingForApproval.Count == 0)
             {
                 foreach (String connectionId in GetConnectionIds())
                 {
@@ -178,68 +190,68 @@ namespace Schafkopf.Models
             }
             foreach (String connectionId in GetConnectionIds())
             {
-                await hub.Clients.Client(connectionId).SendAsync("AskAllowSpectator", SpectatorsWaitingForApproval.Peek().Name);
+                await hub.Clients.Client(connectionId).SendAsync("AskAllowSpectator", _SpectatorsWaitingForApproval.Peek()._Name);
             }
         }
 
         private bool CanCardBePlayed(Game game, Card card)
         {
-            if (game.Trick.FirstCard == null)
+            if (game.GameState.Trick.FirstCard == null)
             {
-                if (game.AnnouncedGame == GameType.Sauspiel &&
-                    HandContainsSearchedSau(game.Leader.AnnouncedColor) &&
+                if (game.GameState.AnnouncedGame == GameType.Sauspiel &&
+                    HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                     !IsRunaway)
                 {
                     // Davonlaufen
-                    if (HandColorCount(game.Leader.AnnouncedColor, game.AnnouncedGame, game.Trick.Trump) >= 4)
+                    if (HandColorCount(game.GameState.Leader.AnnouncedColor, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) >= 4)
                     {
                         IsRunaway = true;
                         return true;
                     }
-                    return card.IsTrump(game.AnnouncedGame, game.Trick.Trump) || card.Color != game.Leader.AnnouncedColor || card.Number == 11;
+                    return card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) || card.Color != game.GameState.Leader.AnnouncedColor || card.Number == 11;
                 }
                 return true;
             }
-            else if (game.Trick.FirstCard.IsTrump(game.AnnouncedGame, game.Trick.Trump))
+            else if (game.GameState.Trick.FirstCard.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()))
             {
                 if (HandContainsTrump(game))
                 {
-                    return card.IsTrump(game.AnnouncedGame, game.Trick.Trump);
+                    return card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor());
                 }
                 if (
-                    game.AnnouncedGame == GameType.Sauspiel &&
-                    HandContainsSearchedSau(game.Leader.AnnouncedColor) &&
+                    game.GameState.AnnouncedGame == GameType.Sauspiel &&
+                    HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                     !IsRunaway
                 )
                 {
-                    if (game.TrickCount < 6)
+                    if (game.GameState.TrickCount < 6)
                     {
-                        return card.Color != game.Leader.AnnouncedColor || card.Number != 11;
+                        return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
                     }
                 }
                 return true;
             }
-            else if (HandContainsColor(game.Trick.FirstCard.Color, game.AnnouncedGame, game.Trick.Trump))
+            else if (HandContainsColor(game.GameState.Trick.FirstCard.Color, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()))
             {
                 if (
-                    game.AnnouncedGame == GameType.Sauspiel &&
-                    game.Trick.FirstCard.Color == game.Leader.AnnouncedColor &&
-                    HandContainsSearchedSau(game.Leader.AnnouncedColor)
+                    game.GameState.AnnouncedGame == GameType.Sauspiel &&
+                    game.GameState.Trick.FirstCard.Color == game.GameState.Leader.AnnouncedColor &&
+                    HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor)
                 )
                 {
-                    return card.Color == game.Trick.FirstCard.Color && card.Number == 11;
+                    return card.Color == game.GameState.Trick.FirstCard.Color && card.Number == 11;
                 }
-                return !card.IsTrump(game.AnnouncedGame, game.Trick.Trump) && card.Color == game.Trick.FirstCard.Color;
+                return !card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) && card.Color == game.GameState.Trick.FirstCard.Color;
             }
             else if (
-                game.AnnouncedGame == GameType.Sauspiel &&
-                HandContainsSearchedSau(game.Leader.AnnouncedColor) &&
+                game.GameState.AnnouncedGame == GameType.Sauspiel &&
+                HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                 !IsRunaway
             )
             {
-                if (game.TrickCount < 6)
+                if (game.GameState.TrickCount < 6)
                 {
-                    return card.Color != game.Leader.AnnouncedColor || card.Number != 11;
+                    return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
                 }
             }
             return true;
@@ -265,7 +277,7 @@ namespace Schafkopf.Models
 
         private bool HandContainsTrump(Game game)
         {
-            return HandCards.Any(c => c.IsTrump(game.AnnouncedGame, game.Trick.Trump));
+            return HandCards.Any(c => c.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()));
         }
 
         private bool HandContainsSearchedSau(Color searchedColor)
@@ -273,7 +285,7 @@ namespace Schafkopf.Models
             return HandCards.Any(c => c.Color == searchedColor && c.Number == 11);
         }
 
-        public async Task<bool> IsSauspielPossible(SchafkopfHub hub)
+        public bool IsSauspielPossible()
         {
             foreach (Color searchedColor in new List<Color>() { Color.Eichel, Color.Gras, Color.Schellen })
             {
@@ -285,39 +297,24 @@ namespace Schafkopf.Models
                     return true;
                 }
             }
-            foreach (String connectionId in GetConnectionIds())
-            {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du bist gesperrt!");
-            }
             return false;
         }
 
-        internal async Task<bool> ExchangeCardWithPlayer(Color cardColor, int cardNumber, Player player, SchafkopfHub hub, Game game)
+        public bool ExchangeCardWithPlayer(Color cardColor, int cardNumber, PlayerState player, SchafkopfHub hub, Game game)
         {
             foreach (Card card in HandCards)
             {
                 if (card.Color == cardColor && card.Number == cardNumber)
                 {
-                    if (card.IsTrump(game.AnnouncedGame, Color.Herz))
+                    if (card.IsTrump(game.GameState.AnnouncedGame, Color.Herz))
                     {
-                        foreach (String connectionId in GetConnectionIds())
-                        {
-                            await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du kannst deinem Mitspieler kein Trumpf geben!");
-                        }
                         return false;
                     }
                     player.HandCards.Add(card);
                     HandCards.Remove(card);
-                    Card trumpCard = player.HandCards.Single(c => c.IsTrump(game.AnnouncedGame, Color.Herz));
+                    Card trumpCard = player.HandCards.Single(c => c.IsTrump(game.GameState.AnnouncedGame, Color.Herz));
                     player.HandCards.Remove(trumpCard);
                     HandCards.Add(trumpCard);
-                    foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-                    {
-                        await hub.Clients.Client(connectionId).SendAsync(
-                            "ReceiveSystemMessage",
-                            $"{player.Name} und {Name} haben eine Karte getauscht"
-                        );
-                    }
                     return true;
                 }
             }
@@ -330,7 +327,7 @@ namespace Schafkopf.Models
             {
                 foreach (String connectionId in GetConnectionIds())
                 {
-                    await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", "Du kannst die Herz-Sau nicht suchen!");
+                    await hub.Clients.Client(connectionId).SendAsync("ReceiveError", "Du kannst die Herz-Sau nicht suchen!");
                 }
                 return false;
             }
@@ -343,7 +340,7 @@ namespace Schafkopf.Models
             }
             foreach (String connectionId in GetConnectionIds())
             {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveSystemMessage", $"Du kannst nicht auf die {searchedColor}-Sau spielen!");
+                await hub.Clients.Client(connectionId).SendAsync("ReceiveError", $"Du kannst nicht auf die {searchedColor}-Sau spielen!");
             }
             return false;
         }
@@ -352,22 +349,22 @@ namespace Schafkopf.Models
         {
             if (Spectators.Where(s => s.GetConnectionIds().Count > 0).ToList().Count > 0)
             {
-                return $" ({String.Join(", ", Spectators.Where(s => s.GetConnectionIds().Count > 0).Select(s => s.Name))})";
+                return $" ({String.Join(", ", Spectators.Where(s => s.GetConnectionIds().Count > 0).Select(s => s._Name))})";
             }
             return "";
         }
 
         public string GetCurrentInfo(Game game)
         {
-            if (game.CurrentGameState == State.AnnounceHochzeit || game.CurrentGameState == State.HochzeitExchangeCards)
+            if (game.GameState.CurrentGameState == State.AnnounceHochzeit || game.GameState.CurrentGameState == State.HochzeitExchangeCards)
             {
-                if (game.Leader == this)
+                if (game.GameState.Leader == this)
                 {
                     return "Wer will mich heiraten?";
                 }
                 else if (HasAnsweredMarriageOffer)
                 {
-                    if (game.HusbandWife == this)
+                    if (game.GameState.HusbandWife == this)
                     {
                         return "Ich will!";
                     }
@@ -377,9 +374,9 @@ namespace Schafkopf.Models
                     }
                 }
             }
-            else if (game.CurrentGameState == State.AnnounceGameColor || (game.CurrentGameState == State.AnnounceGameType && AnnouncedGameType != GameType.Ramsch))
+            else if (game.GameState.CurrentGameState == State.AnnounceGameColor || (game.GameState.CurrentGameState == State.AnnounceGameType && _AnnouncedGameType != GameType.Ramsch))
             {
-                switch (AnnouncedGameType)
+                switch (_AnnouncedGameType)
                 {
                     case GameType.Farbsolo:
                         return "Ich hab ein Solo";
@@ -389,9 +386,9 @@ namespace Schafkopf.Models
                         return "Ich hab ein Sauspiel";
                 }
             }
-            else if (game.CurrentGameState == State.AnnounceGameType || (game.CurrentGameState == State.Announce && WantToPlayAnswered))
+            else if (game.GameState.CurrentGameState == State.AnnounceGameType || (game.GameState.CurrentGameState == State.Announce && _WantToPlayAnswered))
             {
-                if (WantToPlay)
+                if (_WantToPlay)
                 {
                     return "Ich würde";
                 }
@@ -401,6 +398,15 @@ namespace Schafkopf.Models
                 }
             }
             return "";
+        }
+
+        public List<Card> GetHandCards()
+        {
+            return HandCards.ToList();
+        }
+
+        public bool IsSpectators(Player player) {
+            return Spectators.Contains(player);
         }
     }
 }

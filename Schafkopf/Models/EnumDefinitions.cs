@@ -5,4 +5,5 @@
     public enum GameType { Ramsch, Sauspiel, Hochzeit, Wenz, Farbsolo, WenzTout, FarbsoloTout };
     public enum LastTrickButtonState { disabled, show, hide };
     public enum TakeTrickButtonState { hidden, won, lost };
+    public enum Playing { Play, Pause, Undecided };
 }

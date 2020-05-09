@@ -28,6 +28,9 @@
         {
             "label": "watch",
             "command": "dotnet",
+            "options": {
+                "cwd": "${workspaceFolder}/Schafkopf/"
+            },
             "type": "process",
             "args": [
                 "watch",

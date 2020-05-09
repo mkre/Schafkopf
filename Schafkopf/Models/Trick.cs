@@ -1,27 +1,48 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Schafkopf.Hubs;
 
 namespace Schafkopf.Models
 {
-    public class Trick
+    public interface Trick
     {
-        public Card[] Cards = new Card[4];
-        public Player[] Player = new Player[4];
-        public Card FirstCard;
-        public int Count = 0;
-        public GameType GameType = GameType.Ramsch;
-        public Color Trump = Color.Herz;
-        public int Winner = 0;
+        public int Count
+        {
+            get;
+        }
+        public Card FirstCard
+        {
+            get;
+        }
+        public Player Winner
+        {
+            get;
+        }
+        public int Points
+        {
+            get;
+        }
+        public Task SendTrick(SchafkopfHub hub, Game game, List<String> connectionIds);
+    }
+
+    public class TrickState : Trick
+    {
+        public int _Count = 0;
+        private readonly GameType GameType;
+        private readonly Color TrumpColor;
+        private Card[] Cards = new Card[4];
+        private PlayerState[] Player = new PlayerState[4];
+        private int WinnerIndex = 0;
         private int StartPlayer;
 
-        public Trick(Game game, int startPlayer)
+        public TrickState(GameType gameType, Color trump, int startPlayer)
         {
-            GameType = game.AnnouncedGame;
-            DetermineTrumpf(game);
+            GameType = gameType;
+            TrumpColor = trump;
             StartPlayer = startPlayer;
         }
 
@@ -29,26 +50,21 @@ namespace Schafkopf.Models
         // Card is added to the trick
         // in case that there are too many cards in one trick, an exception is thrown
         //-------------------------------------------------
-        public void AddCard(Card card, Player player, Game game)
+        public void AddCard(Card card, PlayerState player)
         {
-            if (Count >= 4)
+            if (_Count >= 4)
             {
                 throw new Exception("There are too many Cards in the trick.");
             }
-            Cards[Count] = card;
-            Player[Count] = player;
-
+            Cards[_Count] = card;
+            Player[_Count] = player;
 
             //Determine the winner of the Trick
-            if(Count > 0)
+            if (_Count > 0)
             {
                 DetermineWinnerCard(card);
-            } else
-            {
-                FirstCard = card;
-                FirstCard.TrickValue = card.GetValue(GameType, Trump);
             }
-            Count++;
+            _Count++;
         }
 
         //-------------------------------------------------
@@ -58,37 +74,20 @@ namespace Schafkopf.Models
         //-------------------------------------------------
         private void DetermineWinnerCard(Card newCard)
         {
-            newCard.TrickValue = newCard.GetValue(GameType, Trump, FirstCard);
             //Check which one is higher
-            if (newCard.TrickValue > Cards[Winner].TrickValue)
+            if (newCard.GetValue(GameType, TrumpColor, FirstCard) > Cards[WinnerIndex].GetValue(GameType, TrumpColor, FirstCard))
             {
-                Winner = Count;
+                WinnerIndex = _Count;
             }
         }
 
-        public Player GetWinner()
-        {
-            return Player[Winner];
-        }
+        public Player Winner => Player[WinnerIndex];
 
-        private void DetermineTrumpf(Game game) {
-            switch (game.AnnouncedGame)
-            {
-                case GameType.Ramsch:
-                case GameType.Sauspiel:
-                case GameType.Hochzeit:
-                    Trump = Color.Herz;
-                    break;
-                case GameType.Farbsolo:
-                case GameType.FarbsoloTout:
-                    Trump = game.Leader.AnnouncedColor;
-                    break;
-                case GameType.Wenz:
-                case GameType.WenzTout:
-                    Trump = Color.None;
-                    break;
-            }
-        }
+        public Card FirstCard => Cards[0];
+
+        public int Points => Cards[0].getPoints() + Cards[1].getPoints() + Cards[2].getPoints() + Cards[3].getPoints();
+
+        public int Count => _Count;
 
         public async Task SendTrick(SchafkopfHub hub, Game game, List<String> connectionIds)
         {
@@ -99,7 +98,7 @@ namespace Schafkopf.Models
                 {
                     permutedCards[j] = Cards[(j + i) % 4];
                 }
-                Player player = game.PlayingPlayers[(StartPlayer + i) % 4];
+                Player player = game.GameState.PlayingPlayers[(StartPlayer + i) % 4];
                 foreach (String connectionId in player.GetConnectionIdsWithSpectators())
                 {
                     if (!connectionIds.Contains(connectionId))
