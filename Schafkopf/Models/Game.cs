@@ -18,11 +18,14 @@ namespace Schafkopf.Models
             {
                 return;
             }
-            GameState.NewTrick();
-            await GameState.Trick.SendTrick(hub, this, GetPlayingPlayersConnectionIds());
-            await SendLastTrickButton(hub, GetPlayingPlayersConnectionIds(), LastTrickButtonState.disabled);
+            if (GameState.CurrentGameState == State.Playing)
+            {
+                GameState.NewTrick();
+                await GameState.Trick.SendTrick(hub, this, GetPlayingPlayersConnectionIds());
+                await SendLastTrickButton(hub, GetPlayingPlayersConnectionIds(), LastTrickButtonState.disabled);
+                await SendTakeTrickButton(hub, GetPlayingPlayersConnectionIds());
+            }
             await ClearGameInfo(hub, GetPlayingPlayersConnectionIds());
-            await SendTakeTrickButton(hub, GetPlayingPlayersConnectionIds());
 
             GameState.Reset();
             await SendPlayersInfo(hub);
@@ -562,24 +565,25 @@ namespace Schafkopf.Models
         }
         public async Task SendAskWantToPlay(SchafkopfHub hub, List<String> connectionIds)
         {
-            int predictedStartPlayer = (GameState.StartPlayer + 1) % GameState.Players.Count;
-            while (GameState.Players[predictedStartPlayer].GetConnectionIds().Count == 0)
+            int startPlayer = (GameState.StartPlayer + 1) % GameState.Players.Count;
+            while (GameState.Players[startPlayer].GetConnectionIds().Count == 0)
             {
-                predictedStartPlayer = (GameState.StartPlayer + 1) % GameState.Players.Count;
+                startPlayer = (GameState.StartPlayer + 1) % GameState.Players.Count;
             }
-            string players = String.Join(", ", GameState.Players.Where(p => p.GetConnectionIds().Count > 0).Select(p => p.Name));
-            string startPlayer = GameState.Players[predictedStartPlayer].Name;
-            int playerCnt = GameState.Players.Where(p => p.GetConnectionIds().Count > 0).ToList().Count;
+            List<Player> players = GameState.Players.Where(p => p.GetConnectionIds().Count > 0).ToList();
+            startPlayer = players.IndexOf(players.Single(p => p.Id == GameState.Players[startPlayer].Id));
+            string playerNames = String.Join(", ", players.Select(p => p.Name));
+            string startPlayerName = players[startPlayer].Name;
             string proposal =
 $@"
-{GameState.Players[predictedStartPlayer].Name},
-{GameState.Players[(int)Math.Floor(predictedStartPlayer + 1m * playerCnt / 4m) % playerCnt].Name},
-{GameState.Players[(int)Math.Floor(predictedStartPlayer + 2m * playerCnt / 4m) % playerCnt].Name},
-{GameState.Players[(int)Math.Floor(predictedStartPlayer + 3m * playerCnt / 4m) % playerCnt].Name}
+{players[startPlayer].Name},
+{players[(int)Math.Floor(startPlayer + 1m * players.Count / 4m) % players.Count].Name},
+{players[(int)Math.Floor(startPlayer + 2m * players.Count / 4m) % players.Count].Name},
+{players[(int)Math.Floor(startPlayer + 3m * players.Count / 4m) % players.Count].Name}
 ";
             foreach (string connectionId in connectionIds)
             {
-                await hub.Clients.Client(connectionId).SendAsync("AskWantToPlay", players, startPlayer, proposal);
+                await hub.Clients.Client(connectionId).SendAsync("AskWantToPlay", playerNames, startPlayerName, proposal);
             }
         }
 

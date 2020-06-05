@@ -213,11 +213,8 @@ namespace Schafkopf.Hubs
             Player player = game.GameState.Players.Single(p => p.Id == userId);
             game.GameState.AddPlayerConnectionId(Context.ConnectionId, player);
             Context.Items.Add("player", player);
-            if (player.GetConnectionIds().Count == 1)
-            {
-                Task asyncTask = game.SendPlayersInfo(this);
-            }
             await Clients.Caller.SendAsync("ReceiveSystemMessage", $"Willkommen zurück, {player.Name}!");
+            await game.SendPlayersInfo(this);
             await game.SendPlayers(this);
             if (game.GameState.CurrentGameState != State.Idle)
             {
