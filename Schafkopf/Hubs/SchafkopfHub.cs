@@ -368,7 +368,7 @@ namespace Schafkopf.Hubs
             Player spectator = game.GameState.DequeueSpectator(player, allow);
             if (allow)
             {
-                await game.SendUpdatedGameState(spectator, this, player.GetConnectionIds());
+                await game.SendUpdatedGameState(player, this, spectator.GetConnectionIds());
             }
             else
             {
