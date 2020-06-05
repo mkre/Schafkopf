@@ -434,6 +434,10 @@ namespace Schafkopf.Hubs
                 game.GameState.NewTrick();
                 await game.GameState.Trick.SendTrick(this, game, game.GetPlayingPlayersConnectionIds());
                 await game.SendTakeTrickButton(this, game.GetPlayingPlayersConnectionIds());
+                if (game.GameState.LastTrick != null)
+                {
+                    await game.SendLastTrickButton(this, game.GetPlayingPlayersConnectionIds(), LastTrickButtonState.show);
+                }
             }
         }
 
