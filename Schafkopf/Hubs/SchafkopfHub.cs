@@ -198,7 +198,7 @@ namespace Schafkopf.Hubs
 
         public async Task ReconnectPlayer(string userId, string gameId)
         {
-            if (!Games.Keys.Contains(gameId))
+            if (gameId == null || !Games.Keys.Contains(gameId))
             {
                 await Clients.Caller.SendAsync("AskUsername");
                 return;

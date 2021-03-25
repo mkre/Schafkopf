@@ -30,6 +30,16 @@
   transform: rotate(180deg) translateY(27.5%);
 }
 
+.game {
+  max-width: 150vh;
+}
+
+@media only screen and (max-width: 576px) {
+  .game {
+    min-width: 100%;
+  }
+}
+
 .float-box {
   width: max-content;
   height: max-content;
