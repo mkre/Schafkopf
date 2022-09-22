@@ -434,9 +434,27 @@ document
   });
 
 document
+  .getElementById("announceGeierButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "Geier").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
   .getElementById("announceWenzButton")
   .addEventListener("click", function (event) {
     connection.invoke("AnnounceGameType", "Wenz").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
+  .getElementById("announceBettelButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "Bettel").catch(function (err) {
       return console.error(err.toString());
     });
     event.preventDefault();
