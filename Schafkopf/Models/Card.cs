@@ -9,6 +9,12 @@ namespace Schafkopf.Models
     {
         public readonly Color Color;
         public readonly int Number;
+        /*
+          Note:
+          2 = Unter
+          3 = Ober
+          4 = Koenig
+        */
 
         public Card(Color color, int number)
         {
@@ -56,6 +62,28 @@ namespace Schafkopf.Models
                             value = 0;
                         }
                         else if (Number == 4)
+                        {
+                            value = (int)Color + 5 * 9 + Number;
+                        }
+                        else
+                        {
+                            value = (int)Color + 5 * Number;
+                        }
+                    }
+                    break;
+                case GameType.Geier:
+                case GameType.GeierTout:
+                    {
+                        //Determine value
+                        if (Number == 3)
+                        {
+                            value = 1000 * Number + (int)Color;
+                        }
+                        else if (firstCard != null && Color != firstCard.Color)
+                        {
+                            value = 0;
+                        }
+                        else if (Number == 4 || Number == 2)
                         {
                             value = (int)Color + 5 * 9 + Number;
                         }
