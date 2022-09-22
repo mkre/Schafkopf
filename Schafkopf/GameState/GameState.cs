@@ -113,6 +113,10 @@ namespace Schafkopf.Logic
                     return Leader.AnnouncedColor;
                 case GameType.Wenz:
                 case GameType.WenzTout:
+                case GameType.Geier:
+                case GameType.GeierTout:
+                case GameType.Bettel:
+                case GameType.BettelOuvert:
                 default:
                     return Color.None;
             }
@@ -206,14 +210,16 @@ namespace Schafkopf.Logic
                 }
                 //Shuffle cards
                 Card[] shuffledCards = _Carddeck.Shuffle();
+
+                int number_of_cards_per_player = shuffledCards.Length / 4;
                 //Distribute cards to the players
                 //Player 1 gets first 8 cards, Player 2 gets second 8 cards, an so on ...
                 for (int i = 0; i < 4; i++)
                 {
-                    Card[] HandCards = new Card[8];
-                    for (int j = i * 8; j < (i + 1) * 8; j++)
+                    Card[] HandCards = new Card[number_of_cards_per_player];
+                    for (int j = i * number_of_cards_per_player; j < (i + 1) * number_of_cards_per_player; j++)
                     {
-                        HandCards[j % 8] = shuffledCards[j];
+                        HandCards[j % number_of_cards_per_player] = shuffledCards[j];
                     }
                     _PlayingPlayers[i].HandCards = new List<Card>(HandCards);
                 }
