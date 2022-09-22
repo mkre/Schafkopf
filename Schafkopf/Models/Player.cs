@@ -356,6 +356,7 @@ namespace Schafkopf.Models
 
         public string GetCurrentInfo(Game game)
         {
+            Random rnd = new Random();
             if (game.GameState.CurrentGameState == State.AnnounceHochzeit || game.GameState.CurrentGameState == State.HochzeitExchangeCards)
             {
                 if (game.GameState.Leader == this)
@@ -380,8 +381,12 @@ namespace Schafkopf.Models
                 {
                     case GameType.Farbsolo:
                         return "Ich hab ein Solo";
+                    case GameType.Bettel:
+                        return "Ich spiel' an Bettel";
                     case GameType.Wenz:
                         return "Ich hab ein Wenz";
+                    case GameType.Geier:
+                        return "Ich spiel' an Geier";
                     case GameType.Sauspiel:
                         return "Ich hab ein Sauspiel";
                 }
@@ -390,11 +395,15 @@ namespace Schafkopf.Models
             {
                 if (_WantToPlay)
                 {
-                    return "Ich würde";
+                    string[] returnvalues = {"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"};
+                    int index = rnd.Next(returnvalues.Length);
+                    return returnvalues[index];
                 }
                 else
                 {
-                    return "Weiter";
+                    string[] returnvalues = {"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"};
+                    int index = rnd.Next(returnvalues.Length);
+                    return returnvalues[index];
                 }
             }
             return "";
