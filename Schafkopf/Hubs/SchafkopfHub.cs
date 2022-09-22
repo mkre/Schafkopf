@@ -115,8 +115,14 @@ namespace Schafkopf.Hubs
                 case "Sauspiel":
                     gameType = GameType.Sauspiel;
                     break;
+                case "Geier":
+                    gameType = GameType.Geier;
+                    break;
                 case "Wenz":
                     gameType = GameType.Wenz;
+                    break;
+                case "Bettel":
+                    gameType = GameType.Bettel;
                     break;
                 case "Solo":
                     gameType = GameType.Farbsolo;
@@ -421,7 +427,7 @@ namespace Schafkopf.Hubs
             if (game.GameState.Trick.Count == 4 && game.GameState.Trick.Winner == player)
             {
                 game.GameState.TakeTrick();
-                if (game.GameState.TrickCount == 8)
+                if (game.GameState.TrickCount == game.GameState.inital_number_of_cards_per_player)
                 {
                     await game.SendEndGameModal(this, game.GetPlayingPlayersConnectionIds());
                 }
