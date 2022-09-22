@@ -12,6 +12,7 @@ namespace Schafkopf.Logic
         private readonly List<PlayerState> _Players = new List<PlayerState>();
         private List<PlayerState> _PlayingPlayers = new List<PlayerState>();
         private readonly Carddeck _Carddeck = new Carddeck();
+        private int _initial_number_of_cards_per_player = 0;
         private State _CurrentGameState = State.Idle;
         private int[] _Groups = new int[] { 0, 0, 0, 0 };
         private int _StartPlayer = -1;
@@ -52,6 +53,7 @@ namespace Schafkopf.Logic
                 }
             }
         }
+        public int inital_number_of_cards_per_player => _initial_number_of_cards_per_player;
         public int TrickCount => _TrickCount;
         public State CurrentGameState
         {
@@ -211,15 +213,15 @@ namespace Schafkopf.Logic
                 //Shuffle cards
                 Card[] shuffledCards = _Carddeck.Shuffle();
 
-                int number_of_cards_per_player = shuffledCards.Length / 4;
+                _initial_number_of_cards_per_player = shuffledCards.Length / 4;
                 //Distribute cards to the players
                 //Player 1 gets first 8 cards, Player 2 gets second 8 cards, an so on ...
                 for (int i = 0; i < 4; i++)
                 {
-                    Card[] HandCards = new Card[number_of_cards_per_player];
-                    for (int j = i * number_of_cards_per_player; j < (i + 1) * number_of_cards_per_player; j++)
+                    Card[] HandCards = new Card[_initial_number_of_cards_per_player];
+                    for (int j = i * _initial_number_of_cards_per_player; j < (i + 1) * _initial_number_of_cards_per_player; j++)
                     {
-                        HandCards[j % number_of_cards_per_player] = shuffledCards[j];
+                        HandCards[j % _initial_number_of_cards_per_player] = shuffledCards[j];
                     }
                     _PlayingPlayers[i].HandCards = new List<Card>(HandCards);
                 }
