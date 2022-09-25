@@ -392,6 +392,13 @@ namespace Schafkopf.Logic
                 PlayerState winner = _Players.Single(p => p.Id == Trick.Winner.Id);
                 winner.AddPoints(Trick.Points);
                 _TrickCount++;
+                // Special case Bettel: Check if winner of trick is leader / announced the game
+                if ( ( _AnnouncedGame == GameType.Bettel || _AnnouncedGame == GameType.BettelOuvert ) && winner == Leader)
+                {
+                    // Game Over
+                    _TrickCount = _initial_number_of_cards_per_player;
+                    //winner.AddPoints(-120);
+                }
             }
         }
 

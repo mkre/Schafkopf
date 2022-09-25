@@ -277,13 +277,29 @@ namespace Schafkopf.Models
             {
                 (int leaderPoints, int followerPoints) = GameState.GetFinalPoints();
                 string gameOverTitle = "";
-                if (leaderPoints <= 60)
+
+                //Special case: Bettel, Bettel Ouvert
+                if (GameState.AnnouncedGame == GameType.Bettel || GameState.AnnouncedGame == GameType.BettelOuvert)
                 {
-                    gameOverTitle = "Die Spieler haben verloren";
+                    if (leaderPoints == 0)
+                    {
+                        gameOverTitle = "Der Bettel-Spieler hat gewonnen";
+                    }
+                    else
+                    {
+                        gameOverTitle = "Der Bettel-Spieler hat verloren";
+                    }
                 }
                 else
                 {
-                    gameOverTitle = "Die Spieler haben gewonnen";
+                    if (leaderPoints <= 60)
+                    {
+                        gameOverTitle = "Die Spieler haben verloren";
+                    }
+                    else
+                    {
+                        gameOverTitle = "Die Spieler haben gewonnen";
+                    }
                 }
                 foreach (String connectionId in connectionIds)
                 {
@@ -607,7 +623,7 @@ $@"
                 await SendStartPlayer(hub, connectionIds);
             }
             // send modals
-            if (GameState.CurrentGameState == State.Playing && GameState.TrickCount == 8)
+            if (GameState.CurrentGameState == State.Playing && GameState.TrickCount == GameState.inital_number_of_cards_per_player)
             {
                 await SendEndGameModal(hub, connectionIds);
             }

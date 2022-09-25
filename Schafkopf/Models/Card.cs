@@ -115,6 +115,28 @@ namespace Schafkopf.Models
                         }
                     }
                     break;
+                case GameType.Bettel:
+                case GameType.BettelOuvert:
+                    {
+                        //Determine value
+                        if (Number == 2  || Number == 3)
+                        {
+                            value = 1000 * Number + (int)Color;
+                        }
+                        else if (firstCard != null && Color != firstCard.Color)
+                        {
+                            value = 0;
+                        }
+                        else if (Number == 4)
+                        {
+                            value = (int)Color + 5 * 9 + Number;
+                        }
+                        else
+                        {
+                            value = (int)Color + 5 * Number;
+                        }
+                    }
+                    break;
                 case GameType.Farbsolo:
                 case GameType.FarbsoloTout:
                     {
