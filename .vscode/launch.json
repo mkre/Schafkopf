@@ -10,7 +10,7 @@
             "request": "launch",
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
-            "program": "${workspaceFolder}/Schafkopf/bin/Debug/netcoreapp3.1/Schafkopf.dll",
+            "program": "${workspaceFolder}/Schafkopf/bin/Debug/netcoreapp6.0/Schafkopf.dll",
             "args": [],
             "cwd": "${workspaceFolder}/Schafkopf",
             "stopAtEntry": false,
