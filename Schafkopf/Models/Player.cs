@@ -41,6 +41,7 @@ namespace Schafkopf.Models
         public Playing _IsPlaying = Playing.Undecided;
         public Boolean _WantToPlay = false;
         public Boolean _WantToPlayAnswered = false;
+        private String _Answer;
         public GameType _AnnouncedGameType = GameType.Ramsch;
         public Color _AnnouncedColor = Color.None;
         public List<PlayerState> Spectators = new List<PlayerState>();
@@ -346,18 +347,22 @@ namespace Schafkopf.Models
             }
             else if (game.GameState.CurrentGameState == State.AnnounceGameType || (game.GameState.CurrentGameState == State.Announce && _WantToPlayAnswered))
             {
-                if (_WantToPlay)
+                if (string.IsNullOrEmpty(_Answer)) // Determine Answer
                 {
-                    string[] returnvalues = {"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"};
-                    int index = rnd.Next(returnvalues.Length);
-                    return returnvalues[index];
+                    if (_WantToPlay)
+                    {
+                        string[] returnvalues = {"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"};
+                        int index = rnd.Next(returnvalues.Length);
+                        _Answer = returnvalues[index];
+                    }
+                    else
+                    {
+                        string[] returnvalues = {"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"};
+                        int index = rnd.Next(returnvalues.Length);
+                        return returnvalues[index];
+                    }
                 }
-                else
-                {
-                    string[] returnvalues = {"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"};
-                    int index = rnd.Next(returnvalues.Length);
-                    return returnvalues[index];
-                }
+                return _Answer;
             }
             return "";
         }
