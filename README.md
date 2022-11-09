@@ -17,7 +17,6 @@ Note, that this is a German game so everything in the game is in German.
 * Sauspiel
 * Farbsolo
 * Wenz
-* Hochzeit
 * Ramsch
 * Chat
 * More than 4 Players (additional players can spectate if not playing)

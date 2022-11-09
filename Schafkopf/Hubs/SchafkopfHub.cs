@@ -59,47 +59,6 @@ namespace Schafkopf.Hubs
                 }
                 await game.SendAskAnnounce(this);
             }
-            if (game.GameState.CurrentGameState == State.AnnounceHochzeit)
-            {
-                if (player.HandTrumpCount(GameType.Ramsch, Color.Herz) == 1 && !player.HasBeenAskedToOfferMarriage)
-                {
-                    foreach (String connectionId in player.GetConnectionIdsWithSpectators())
-                    {
-                        await Clients.Client(connectionId).SendAsync("CloseAnnounceModal");
-                    }
-                    game.GameState.SetPlayerHasBeenAskedToOfferMarriage(true, player);
-                    if (wantToPlay)
-                    {
-                        game.GameState.AnnouncedGame = GameType.Hochzeit;
-                        game.GameState.Leader = player;
-                    }
-                    await game.SendAskAnnounceHochzeit(this);
-                }
-                else if (game.GameState.AnnouncedGame == GameType.Hochzeit && !player.HasAnsweredMarriageOffer)
-                {
-                    game.GameState.SetPlayerHasAnsweredMarriageOffer(true, player);
-                    if (wantToPlay)
-                    {
-                        foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
-                        {
-                            await Clients.Client(connectionId).SendAsync("CloseAnnounceModal");
-                        }
-                        game.GameState.CurrentGameState = State.HochzeitExchangeCards;
-                        game.GameState.HusbandWife = player;
-                        game.GameState.ActionPlayer = game.GameState.PlayingPlayers.IndexOf(game.GameState.HusbandWife);
-                        await game.SendAskExchangeCards(this, game.GameState.HusbandWife.GetConnectionIdsWithSpectators());
-                    }
-                    else
-                    {
-                        foreach (String connectionId in player.GetConnectionIdsWithSpectators())
-                        {
-                            await Clients.Client(connectionId).SendAsync("CloseAnnounceModal");
-                        }
-                        await game.SendAskAnnounceHochzeit(this);
-                    }
-                }
-                await game.SendPlayers(this);
-            }
         }
 
         public async Task AnnounceGameType(string gameTypeString)
