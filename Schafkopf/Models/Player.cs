@@ -328,7 +328,6 @@ namespace Schafkopf.Models
 
         public string GetCurrentInfo(Game game)
         {
-            Random rnd = new Random();
             if (game.GameState.CurrentGameState == State.AnnounceGameColor || (game.GameState.CurrentGameState == State.AnnounceGameType && _AnnouncedGameType != GameType.Ramsch))
             {
                 switch (_AnnouncedGameType)
@@ -349,17 +348,19 @@ namespace Schafkopf.Models
             {
                 if (string.IsNullOrEmpty(_Answer)) // Determine Answer
                 {
+                    Random rnd = new Random();
+                    var getRandomAnswer = (string[] answers) =>
+                    {
+                        return answers[rnd.Next(answers.Length)];
+                    };
                     if (_WantToPlay)
                     {
-                        string[] returnvalues = {"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"};
-                        int index = rnd.Next(returnvalues.Length);
-                        _Answer = returnvalues[index];
+                        _Answer = getRandomAnswer(new string[]{"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"});
+                        
                     }
                     else
                     {
-                        string[] returnvalues = {"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"};
-                        int index = rnd.Next(returnvalues.Length);
-                        return returnvalues[index];
+                        _Answer = getRandomAnswer(new string[]{"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"});
                     }
                 }
                 return _Answer;
