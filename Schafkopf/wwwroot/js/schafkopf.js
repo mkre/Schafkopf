@@ -208,6 +208,16 @@ function init() {
     showModal('#wantToPlayModal');
   });
 
+  connection.on("AskAnnounceHochzeit", function (message) {
+    document.getElementById("announceModalTitle").textContent = "Magst du eine Hochzeit anbieten?";
+    showModal('#announceModal');
+  });
+
+  connection.on("AskWantToMarryPlayer", function (message) {
+    document.getElementById("announceModalTitle").textContent = `Magst du ${message} heiraten?`;
+    showModal('#announceModal');
+  });
+
   connection.on("AskWantToSpectate", function (players) {
     document.getElementById("wantToSpectatePlayer1Button").textContent = players[0];
     document.getElementById("wantToSpectatePlayer2Button").textContent = players[1];

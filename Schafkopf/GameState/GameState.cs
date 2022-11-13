@@ -108,6 +108,8 @@ namespace Schafkopf.Logic
             {
                 case GameType.Ramsch:
                 case GameType.Sauspiel:
+                case GameType.Hochzeit:
+                    return Color.Herz;
                 case GameType.Farbsolo:
                 case GameType.FarbsoloTout:
                     return Leader.AnnouncedColor;
@@ -200,7 +202,7 @@ namespace Schafkopf.Logic
         {
             lock (_Lock)
             {
-                _CurrentGameState = State.Announce;
+                _CurrentGameState = State.AnnounceHochzeit;
 
                 //New first player
                 _StartPlayer = (_StartPlayer + 1) % Players.Count;
@@ -226,6 +228,15 @@ namespace Schafkopf.Logic
             }
         }
 
+        internal bool ExchangeCardWithPlayer(Player player, Color cardColor, int cardNumber, Player leader, SchafkopfHub hub, Game game)
+        {
+            lock (_Lock)
+            {
+                PlayerState playerState = _Players.Single(p => p.Id == player.Id);
+                PlayerState leaderState = _Players.Single(p => p.Id == leader.Id);
+                return playerState.ExchangeCardWithPlayer(cardColor, cardNumber, leaderState, hub, game);
+            }
+        }
 
         internal void SetPlayerPlaying(Playing value, Player player)
         {
@@ -259,6 +270,23 @@ namespace Schafkopf.Logic
                         _PlayingPlayers.Remove(playerState);
                     }
                 }
+            }
+        }
+        internal void SetPlayerHasBeenAskedToOfferMarriage(bool value, Player player)
+        {
+            lock (_Lock)
+            {
+                PlayerState playerState = _Players.Single(p => p.Id == player.Id);
+                playerState._HasBeenAskedToOfferMarriage = value;
+            }
+        }
+
+        internal void SetPlayerHasAnsweredMarriageOffer(bool value, Player player)
+        {
+            lock (_Lock)
+            {
+                PlayerState playerState = _Players.Single(p => p.Id == player.Id);
+                playerState._HasAnsweredMarriageOffer = value;
             }
         }
         internal (Card, string) PlayCard(Color cardColor, int cardNumber, SchafkopfHub hub, Game game, Player player)
@@ -405,6 +433,17 @@ namespace Schafkopf.Logic
                                     _Groups[i] = 0;
                                 }
                             }
+                        }
+                    }
+                    else if (_AnnouncedGame == GameType.Hochzeit)
+                    {
+                        if (PlayingPlayers[i] == Leader || PlayingPlayers[i] == HusbandWife)
+                        {
+                            _Groups[i] = 1;
+                        }
+                        else
+                        {
+                            _Groups[i] = 0;
                         }
                     }
                     // Wenz, Farbsolo, WenzTout, FarbsoloTout

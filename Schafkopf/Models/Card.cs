@@ -41,6 +41,7 @@ namespace Schafkopf.Models
             {
                 //Highest card looses
                 case GameType.Ramsch:
+                case GameType.Hochzeit:
                 case GameType.Sauspiel:
                     {
                         //Determine value

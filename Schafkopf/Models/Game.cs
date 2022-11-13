@@ -88,7 +88,7 @@ namespace Schafkopf.Models
             {
                 return;
             }
-            await SendAskAnnounceInit(hub);
+            await SendAskAnnounceHochzeit(hub);
         }
 
         private async Task<bool> CheckIfOnePlayerHas6Nixerl(SchafkopfHub hub)
@@ -161,6 +161,10 @@ namespace Schafkopf.Models
             {
                 message = $"Es wird geramscht!";
             }
+            else if (GameState.AnnouncedGame == GameType.Hochzeit)
+            {
+                message = $"{GameState.Leader.Name} (kein Trumpf) und {GameState.HusbandWife.Name} spielen eine Hochzeit!";
+            }
             else
             {
                 message = $"{GameState.Leader.Name} spielt {GameState.AnnouncedGame}";
@@ -196,6 +200,29 @@ namespace Schafkopf.Models
 
         public async Task PlayCard(Player player, Color cardColor, int cardNumber, SchafkopfHub hub)
         {
+            if (GameState.CurrentGameState == State.HochzeitExchangeCards && player == GameState.HusbandWife)
+            {
+                bool success = GameState.ExchangeCardWithPlayer(player, cardColor, cardNumber, GameState.Leader, hub, this);
+
+                if (success)
+                {
+                    foreach (String connectionId in GetPlayingPlayersConnectionIds())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync(
+                            "ReceiveSystemMessage", $"{GameState.HusbandWife.Name} und {GameState.Leader.Name} haben eine Karte getauscht"
+                        );
+                    }
+                    await StartGame(hub);
+                }
+                else
+                {
+                    foreach (String connectionId in player.GetConnectionIds())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync("ReceiveError", "Du kannst deinem Mitspieler kein Trumpf geben!");
+                    }
+                }
+                return;
+            }
             if (GameState.CurrentGameState != State.Playing || player != GameState.PlayingPlayers[GameState.ActionPlayer])
             {
                 foreach (String connectionId in player.GetConnectionIds())
@@ -364,6 +391,14 @@ namespace Schafkopf.Models
             }
         }
 
+        //-------------------------------------------------
+        // Determines the partner for a Marriage (Hochzeit)
+        //-------------------------------------------------
+        public void IWantToMarryU(Player p)
+        {
+            GameState.HusbandWife = p;
+        }
+
         public async Task SendConnectionToPlayerLostModal(SchafkopfHub hub, List<string> connectionIds)
         {
             foreach (String connectionId in connectionIds)
@@ -440,14 +475,54 @@ namespace Schafkopf.Models
             }
         }
 
-        public async Task SendAskAnnounceInit(SchafkopfHub hub)
+        public async Task SendAskAnnounceHochzeit(SchafkopfHub hub)
         {
+            if (GameState.AnnouncedGame == GameType.Hochzeit && GameState.PlayingPlayers.Any(p => p != GameState.Leader && !p.HasAnsweredMarriageOffer))
+            {
+                foreach (Player player in GameState.PlayingPlayers.Where(p => p != GameState.Leader && !p.HasAnsweredMarriageOffer))
+                {
+                    await SendAskWantToMarryPlayer(hub, player.GetConnectionIdsWithSpectators());
+                }
+                return;
+            }
+
+            foreach (Player player in GameState.PlayingPlayers)
+            {
+                if (player.HandTrumpCount(GameType.Ramsch, Color.Herz) == 1 && !player.HasBeenAskedToOfferMarriage)
+                {
+                    foreach (String connectionId in player.GetConnectionIdsWithSpectators())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync("AskAnnounceHochzeit");
+                    }
+                    return;
+                }
+            }
+
             GameState.AnnouncedGame = GameType.Ramsch;
             GameState.Leader = null;
             GameState.CurrentGameState = State.Announce;
             GameState.ActionPlayer = GameState.PlayingPlayers.IndexOf(GameState.Players[GameState.StartPlayer]);
             await SendPlayers(hub);
             await SendAskAnnounce(hub);
+        }
+
+        public async Task SendAskWantToMarryPlayer(SchafkopfHub hub, List<string> connectionIds)
+        {
+            foreach (String connectionId in connectionIds)
+            {
+                await hub.Clients.Client(connectionId).SendAsync("AskWantToMarryPlayer", GameState.Leader.Name);
+            }
+        }
+
+        public async Task SendAskExchangeCards(SchafkopfHub hub, List<string> connectionIds)
+        {
+            foreach (string connectionId in connectionIds)
+            {
+                await hub.Clients.Client(connectionId).SendAsync(
+                    "ReceiveInfo",
+                    "Klicke auf die Karte, die du deinem Mitspieler geben willst."
+                );
+            }
         }
 
         public async Task SendAskForGameType(SchafkopfHub hub)
@@ -574,6 +649,14 @@ $@"
             if (GameState.Leader == player && GameState.CurrentGameState == State.AnnounceGameColor)
             {
                 await SendAskForGameColor(hub);
+            }
+            if (GameState.CurrentGameState == State.AnnounceHochzeit)
+            {
+                await SendAskAnnounceHochzeit(hub);
+            }
+            if (GameState.CurrentGameState == State.HochzeitExchangeCards && player == GameState.HusbandWife)
+            {
+                await SendAskExchangeCards(hub, connectionIds);
             }
         }
 

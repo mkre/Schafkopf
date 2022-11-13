@@ -15,6 +15,8 @@ namespace Schafkopf.Models
         Color AnnouncedColor { get; }
         int Balance { get; }
         Playing IsPlaying { get; }
+        bool HasBeenAskedToOfferMarriage { get; }
+        bool HasAnsweredMarriageOffer { get; }
         bool WantToPlay { get; }
         bool WantToPlayAnswered { get; }
         GameType AnnouncedGameType { get; }
@@ -46,6 +48,8 @@ namespace Schafkopf.Models
         public Color _AnnouncedColor = Color.None;
         public List<PlayerState> Spectators = new List<PlayerState>();
         public Queue<PlayerState> _SpectatorsWaitingForApproval = new Queue<PlayerState>();
+        public bool _HasBeenAskedToOfferMarriage = false;
+        public bool _HasAnsweredMarriageOffer = false;
         private bool IsRunaway = false;
 
         public string Name => _Name;
@@ -53,6 +57,8 @@ namespace Schafkopf.Models
         public Color AnnouncedColor => _AnnouncedColor;
         public int Balance => _Balance;
         public Playing IsPlaying => _IsPlaying;
+        public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
+        public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
         public List<Player> SpectatorsWaitingForApproval => _SpectatorsWaitingForApproval.Cast<Player>().ToList();
 
         public bool WantToPlay => _WantToPlay;
@@ -80,6 +86,8 @@ namespace Schafkopf.Models
             Spectators = new List<PlayerState>();
             _SpectatorsWaitingForApproval = new Queue<PlayerState>();
             IsRunaway = false;
+            _HasBeenAskedToOfferMarriage = false;
+            _HasAnsweredMarriageOffer = false;
         }
 
         //-------------------------------------------------
@@ -293,6 +301,27 @@ namespace Schafkopf.Models
             return false;
         }
 
+        public bool ExchangeCardWithPlayer(Color cardColor, int cardNumber, PlayerState player, SchafkopfHub hub, Game game)
+        {
+            foreach (Card card in HandCards)
+            {
+                if (card.Color == cardColor && card.Number == cardNumber)
+                {
+                    if (card.IsTrump(game.GameState.AnnouncedGame, Color.Herz))
+                    {
+                        return false;
+                    }
+                    player.HandCards.Add(card);
+                    HandCards.Remove(card);
+                    Card trumpCard = player.HandCards.Single(c => c.IsTrump(game.GameState.AnnouncedGame, Color.Herz));
+                    player.HandCards.Remove(trumpCard);
+                    HandCards.Add(trumpCard);
+                    return true;
+                }
+            }
+            throw new Exception("There is something wrong, the card is not on the hand.");
+        }
+
         public async Task<bool> IsSauspielOnColorPossible(Color searchedColor, SchafkopfHub hub)
         {
             if (searchedColor == Color.Herz)
@@ -328,7 +357,25 @@ namespace Schafkopf.Models
 
         public string GetCurrentInfo(Game game)
         {
-            if (game.GameState.CurrentGameState == State.AnnounceGameColor || (game.GameState.CurrentGameState == State.AnnounceGameType && _AnnouncedGameType != GameType.Ramsch))
+            if (game.GameState.CurrentGameState == State.AnnounceHochzeit || game.GameState.CurrentGameState == State.HochzeitExchangeCards)
+            {
+                if (game.GameState.Leader == this)
+                {
+                    return "Wer will mich heiraten?";
+                }
+                else if (HasAnsweredMarriageOffer)
+                {
+                    if (game.GameState.HusbandWife == this)
+                    {
+                        return "Ich will!";
+                    }
+                    else
+                    {
+                        return "Ich nicht";
+                    }
+                }
+            }
+            else if (game.GameState.CurrentGameState == State.AnnounceGameColor || (game.GameState.CurrentGameState == State.AnnounceGameType && _AnnouncedGameType != GameType.Ramsch))
             {
                 switch (_AnnouncedGameType)
                 {
