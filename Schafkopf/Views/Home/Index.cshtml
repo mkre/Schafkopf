@@ -191,26 +191,39 @@
         <h5 class="modal-title">Spieleinstellungen</h5>
       </div>
       <div class="modal-body">
+        <div class="form-group row">
+          <label for="gameIdInput" class="col-sm-4 col-form-label">Tischname</label>
+          <div class="col-sm-8">
+            <input type="text" class="form-control" id="gameIdInput">
+          </div>
+        </div>
         <div class="form-check">
-          <input class="form-check-input" type="radio" name="kurzesLangesBlattRadio" id="kurzesBlattRadio" checked>
+          <input class="form-check-input" type="checkbox" id="newTableCheck" onClick="showNewTableOptions(this)">
+          <label class="form-check-label" for="newTableCheck">
+            Neuen Tisch erstellen
+          </label>
+        </div>
+        <hr>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="newTableOption" id="kurzesBlattRadio" checked disabled>
           <label class="form-check-label" for="kurzesBlattRadio">
             Kurzes Blatt
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="radio" name="kurzesLangesBlattRadio" id="langesBlattRadio" value="langesBlattEnabled">
+          <input class="form-check-input" type="radio" name="newTableOption" id="langesBlattRadio" value="langesBlattEnabled" disabled>
           <label class="form-check-label" for="langesBlattRadio">
             Langes Blatt
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" id="hochzeitEnabledCheck">
+          <input class="form-check-input" type="checkbox" name="newTableOption" id="hochzeitEnabledCheck" disabled>
           <label class="form-check-label" for="hochzeitEnabledCheck">
             Hochzeit
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="checkbox" value="" id="bettelEnabledCheck" checked>
+          <input class="form-check-input" type="checkbox" name="newTableOption" id="bettelEnabledCheck" checked disabled>
           <label class="form-check-label" for="bettelEnabledCheck">
             Bettel
           </label>

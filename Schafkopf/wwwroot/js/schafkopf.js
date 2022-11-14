@@ -601,8 +601,8 @@ document
   .addEventListener("click", function (event) {
     hideModal('#gameIdModal');
     let searchParams = new URLSearchParams(window.location.search);
-    // TODO: Automatically set an unused gameID (number) instead of "test"
-    searchParams.set("game", "test"/*document.getElementById("gameIdInput").value*/)
+    // TODO: Automatically set an unused gameID (number) instead of using the input field
+    searchParams.set("game", document.getElementById("gameIdInput").value)
     window.location.search = searchParams.toString();
 
     localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
@@ -665,3 +665,19 @@ document
     })
     event.preventDefault();
   });
+
+  function showNewTableOptions(checkbox) {
+    // TODO: Take precautions that no duplicate games are created
+    var ckName = document.getElementsByName("newTableOption");
+    var checked = document.getElementById(checkbox.id);
+
+    if (checked.checked) {
+      for (var i=0; i < ckName.length; i++) {
+        ckName[i].disabled = false;
+      } 
+    } else {
+      for (var i=0; i < ckName.length; i++) {
+        ckName[i].disabled = true;
+      } 
+    }    
+}
