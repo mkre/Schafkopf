@@ -122,8 +122,10 @@
 }
 
 #announceModal {
-  position:absolute;
-  width:25vw;
-  left:25vw;
-  bottom:20vw;
+  position: absolute;
+  width: 25vw;
+  left: 25vw;
+  bottom: 20vw;
+  top: auto;
+  height: auto;
 }
