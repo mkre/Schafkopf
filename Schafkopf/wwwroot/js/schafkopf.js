@@ -514,9 +514,13 @@ document
     if (userName === "") {
       return;
     }
+    const isShortHand = localStorage.getItem("isShortHand") === 'true';
+    const isBettelEnabled = localStorage.getItem("bettelEnabled") === 'true';
+    const isHochzeitEnabled = localStorage.getItem("hochzeitEnabled") === 'true';
+
     document.getElementById("startModalUserName").value = "";
     connection
-      .invoke("AddPlayer", userName, searchParams.get("game"))
+      .invoke("AddPlayer", userName, searchParams.get("game"), isShortHand, isBettelEnabled, isHochzeitEnabled)
       .catch(function (err) {
         return console.error(err.toString());
       });
@@ -597,8 +601,14 @@ document
   .addEventListener("click", function (event) {
     hideModal('#gameIdModal');
     let searchParams = new URLSearchParams(window.location.search);
-    searchParams.set("game", document.getElementById("gameIdInput").value)
+    // TODO: Automatically set an unused gameID (number) instead of "test"
+    searchParams.set("game", "test"/*document.getElementById("gameIdInput").value*/)
     window.location.search = searchParams.toString();
+
+    localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
+    localStorage.setItem("bettelEnabled", document.getElementById("bettelEnabledCheck").checked);
+    localStorage.setItem("hochzeitEnabled", document.getElementById("hochzeitEnabledCheck").checked);
+    // TODO: Invoke a CreateGame task here instead of storing these to localStorage and processing in AddPlayer
     tryReconnect();
     event.preventDefault();
   });

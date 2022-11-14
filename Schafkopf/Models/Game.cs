@@ -10,7 +10,11 @@ namespace Schafkopf.Models
 {
     public class Game
     {
-        public GameState GameState = new GameState();
+        public GameState GameState;
+
+        public Game(GameRules rules) {
+            GameState = new GameState(rules);
+        }
 
         public async Task Reset(SchafkopfHub hub)
         {
@@ -488,7 +492,7 @@ namespace Schafkopf.Models
 
             foreach (Player player in GameState.PlayingPlayers)
             {
-                if (player.HandTrumpCount(GameType.Ramsch, Color.Herz) == 1 && !player.HasBeenAskedToOfferMarriage)
+                if (GameState.Rules.isHochzeitEnabled && player.HandTrumpCount(GameType.Ramsch, Color.Herz) == 1 && !player.HasBeenAskedToOfferMarriage)
                 {
                     foreach (String connectionId in player.GetConnectionIdsWithSpectators())
                     {

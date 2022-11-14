@@ -121,7 +121,7 @@
   line-height: 1.3vw;
 }
 
-.modal-dialog {
+#announceModal {
   position:absolute;
   width:25vw;
   left:25vw;

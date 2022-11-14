@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
+using Schafkopf.Logic;
 
 namespace Schafkopf.Hubs
 {
@@ -263,7 +264,7 @@ namespace Schafkopf.Hubs
                 }
             }
         }
-        public async Task AddPlayer(string userName, string gameId)
+        public async Task AddPlayer(string userName, string gameId, bool isShortHand, bool withBettel, bool withHochzeit)
         {
             Game game;
             Player player;
@@ -306,7 +307,11 @@ namespace Schafkopf.Hubs
             }
             else
             {
-                game = new Game();
+                GameRules rules = new GameRules();
+                rules.isShortHand = isShortHand;
+                rules.isBettelEnabled = withBettel;
+                rules.isHochzeitEnabled = withHochzeit;
+                game = new Game(rules);
                 Games[gameId] = game;
             }
             if (game.GameState.Players.Where(p => p.Name == userName).ToList().Count > 0)

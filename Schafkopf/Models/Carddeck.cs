@@ -8,10 +8,12 @@ namespace Schafkopf.Models
     {
         private readonly ReadOnlyCollection<Card> Cards;
         private readonly Random random = new Random();
-        public readonly bool short_hand = true;
+        private readonly bool short_hand;
 
-        public Carddeck()
+        public Carddeck(bool isShortHand)
         {
+            short_hand = isShortHand;
+
             List<Card> CardsList = new List<Card>();
             CardsList.Add(new Card(Color.Schellen, 9));
             CardsList.Add(new Card(Color.Schellen, 10));

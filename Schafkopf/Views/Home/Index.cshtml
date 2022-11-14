@@ -185,19 +185,40 @@
 </div>
 
 <div class="modal fade text-dark" id="gameIdModal" tabindex="-1" role="dialog" >
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-sm" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Wie soll das Spiel heißen?</h5>
+        <h5 class="modal-title">Spieleinstellungen</h5>
       </div>
-      <form id="userNameInput">
-        <div class="modal-body">
-          <input class="form-control" type="text" id="gameIdInput" value="bellavista" />
+      <div class="modal-body">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="kurzesLangesBlattRadio" id="kurzesBlattRadio" checked>
+          <label class="form-check-label" for="kurzesBlattRadio">
+            Kurzes Blatt
+          </label>
         </div>
-        <div class="modal-footer">
-          <input type="submit" class="btn btn-primary" id="gameIdSubmitButton" value="Los geht's!"/>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="kurzesLangesBlattRadio" id="langesBlattRadio" value="langesBlattEnabled">
+          <label class="form-check-label" for="langesBlattRadio">
+            Langes Blatt
+          </label>
         </div>
-      </form>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="hochzeitEnabledCheck">
+          <label class="form-check-label" for="hochzeitEnabledCheck">
+            Hochzeit
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" value="" id="bettelEnabledCheck" checked>
+          <label class="form-check-label" for="bettelEnabledCheck">
+            Bettel
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <input type="submit" class="btn btn-primary" id="gameIdSubmitButton" value="Los geht's!"/>
+        </div>
     </div>
   </div>
 </div>

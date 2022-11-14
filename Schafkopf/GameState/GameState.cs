@@ -11,7 +11,7 @@ namespace Schafkopf.Logic
         // internal Gamestate is private, so it can not be accesses by other classes
         private readonly List<PlayerState> _Players = new List<PlayerState>();
         private List<PlayerState> _PlayingPlayers = new List<PlayerState>();
-        private readonly Carddeck _Carddeck = new Carddeck();
+        private readonly Carddeck _Carddeck;
         private int _initial_number_of_cards_per_player = 0;
         private State _CurrentGameState = State.Idle;
         private int[] _Groups = new int[] { 0, 0, 0, 0 };
@@ -31,6 +31,13 @@ namespace Schafkopf.Logic
         public Trick LastTrick => _LastTrick;
         public List<Player> Players => _Players.Cast<Player>().ToList();
         public List<Player> PlayingPlayers => _PlayingPlayers.Cast<Player>().ToList();
+
+        public readonly GameRules Rules;
+
+        public GameState(GameRules rules) {
+            Rules = rules;
+            _Carddeck = new Carddeck(rules.isShortHand);
+        }
         public int ActionPlayer
         {
             get => _ActionPlayer;
