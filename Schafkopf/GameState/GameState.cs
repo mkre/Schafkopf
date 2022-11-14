@@ -216,9 +216,12 @@ namespace Schafkopf.Logic
                 while (!PlayingPlayers.Contains(Players[_StartPlayer]))
                 {
                     _StartPlayer = (_StartPlayer + 1) % Players.Count;
-                }
+                }    
                 //Shuffle cards
                 Card[] shuffledCards = _Carddeck.Shuffle();
+                
+                //// TESTING
+                // Card[] shuffledCards = _Carddeck.Hochzeit();
 
                 _initial_number_of_cards_per_player = shuffledCards.Length / 4;
                 //Distribute cards to the players

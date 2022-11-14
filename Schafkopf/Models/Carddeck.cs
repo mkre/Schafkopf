@@ -124,5 +124,22 @@ namespace Schafkopf.Models
             }
             return shuffledCards;
         }
+
+        public Card[] Hochzeit()
+        {
+            Card[] shuffledCards;
+            if (short_hand)
+            {
+                shuffledCards = new Card[24];
+            } else
+            {
+                shuffledCards = new Card[32];
+            }
+            
+            Cards.CopyTo(shuffledCards, 0);
+            (shuffledCards[2], shuffledCards[16]) = (shuffledCards[16], shuffledCards[2]);
+
+            return shuffledCards;
+        }
     }
 }
