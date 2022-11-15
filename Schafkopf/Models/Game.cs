@@ -84,10 +84,18 @@ namespace Schafkopf.Models
             GameState.StartGame();
             foreach (Player player in GameState.PlayingPlayers)
             {
+                // await player.SendHalfHand(hub);
                 await player.SendHand(hub);
             }
 
             await SendStartPlayer(hub, GetPlayingPlayersConnectionIds());
+
+            // foreach (String connectionId in GetPlayingPlayersConnectionIds())
+            // {
+            //     await hub.Clients.Client(connectionId).SendAsync("OpenWantToKnockModal");
+            // }
+
+            
             if (await CheckIfOnePlayerHas6Nixerl(hub))
             {
                 return;

@@ -194,6 +194,11 @@ function init() {
     showModal('#gameColorModal');
   });
 
+  connection.on("OpenWantToKnockModal", function (message) {
+    document.getElementById("announceModalTitle").textContent = "Willst du klopfen?";
+    showModal('#announceModal');
+  });
+
   connection.on("AskWantToPlay", function (players, startPlayer, proposal) {
     document.getElementById("wantToPlayModalBody").innerHTML = "";
     const playersDiv = document.createElement("div");

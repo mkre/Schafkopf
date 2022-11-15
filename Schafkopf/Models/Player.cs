@@ -23,6 +23,8 @@ namespace Schafkopf.Models
         List<Player> SpectatorsWaitingForApproval { get; }
         int HandTrumpCount(GameType gameType, Color trump);
         Task SendHand(SchafkopfHub hub, GameType gameType = GameType.Ramsch, Color trump = Color.Herz);
+        Task SendHalfHand(SchafkopfHub hub);
+
         List<String> GetConnectionIds();
         List<String> GetConnectionIdsWithSpectators();
         List<Card> GetHandCards();
@@ -165,6 +167,17 @@ namespace Schafkopf.Models
                 await hub.Clients.Client(connectionId).SendAsync(
                     "ReceiveHand",
                     HandCards.OrderByDescending(c => c.GetValue(gameType, trump)).Select(card => card.ToString())
+                );
+            }
+        }
+
+        public async Task SendHalfHand(SchafkopfHub hub)
+        {
+            foreach (String connectionId in GetConnectionIdsWithSpectators())
+            {
+                await hub.Clients.Client(connectionId).SendAsync(
+                    "ReceiveHand",
+                    HandCards.GetRange(0, HandCards.Count/2).OrderByDescending(c => c.GetValue(GameType.Ramsch, Color.Herz)).Select(card => card.ToString())
                 );
             }
         }

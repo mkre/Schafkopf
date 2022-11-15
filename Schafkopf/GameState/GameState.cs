@@ -409,6 +409,8 @@ namespace Schafkopf.Logic
                     _TrickCount = _initial_number_of_cards_per_player;
                     //winner.AddPoints(-120);
                 }
+
+                // ToDo: Add Tout-Logic
             }
         }
 
