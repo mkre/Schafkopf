@@ -130,6 +130,15 @@ function init() {
     }
   });
 
+  connection.on("OfferBettel", function (isBettelEnabled) {
+    var x = document.getElementById("announceBettelButton");
+    if (isBettelEnabled === "True") {
+      x.style.display = "block";
+    } else {
+      x.style.display = "none";
+    }
+  });
+
   connection.on("ReceiveChatMessage", function (user, message) {
     var div = document.createElement("div");
     var userB = div.appendChild(document.createElement("b"));

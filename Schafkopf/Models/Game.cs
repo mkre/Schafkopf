@@ -81,6 +81,10 @@ namespace Schafkopf.Models
             {
                 await hub.Clients.Client(connectionId).SendAsync("CloseWantToPlayModal");
             }
+            foreach (String connectionId in GetPlayingPlayersConnectionIds())
+            {
+                await hub.Clients.Client(connectionId).SendAsync("OfferBettel", GameState.Rules.isBettelEnabled.ToString());
+            }
 
             GameState.StartGame();
             
