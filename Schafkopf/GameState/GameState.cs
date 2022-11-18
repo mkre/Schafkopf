@@ -171,6 +171,15 @@ namespace Schafkopf.Logic
             }
         }
 
+        internal void Knock(Player player, bool wantToKnock)
+        {
+            lock (_Lock)
+            {
+                PlayerState playerState = _Players.Single(p => p.Id == player.Id);
+                playerState.Knock(wantToKnock);
+            }
+        }
+
         public void NewTrick()
         {
             lock (_Lock)

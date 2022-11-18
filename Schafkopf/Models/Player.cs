@@ -19,6 +19,7 @@ namespace Schafkopf.Models
         bool HasAnsweredMarriageOffer { get; }
         bool WantToPlay { get; }
         bool WantToPlayAnswered { get; }
+        bool WantToKnockAnswered { get; }
         GameType AnnouncedGameType { get; }
         List<Player> SpectatorsWaitingForApproval { get; }
         int HandTrumpCount(GameType gameType, Color trump);
@@ -44,8 +45,11 @@ namespace Schafkopf.Models
         private readonly List<String> _connectionIds = new List<String>();
         public Playing _IsPlaying = Playing.Undecided;
         public Boolean _WantToPlay = false;
+        public Boolean _WantToKnock = false;
         public Boolean _WantToPlayAnswered = false;
-        private String _Answer;
+        public Boolean _WantToKnockAnswered = false;
+        private String _AnnounceAnswer;
+        private String _KnockAnswer;
         public GameType _AnnouncedGameType = GameType.Ramsch;
         public Color _AnnouncedColor = Color.None;
         public List<PlayerState> Spectators = new List<PlayerState>();
@@ -61,6 +65,7 @@ namespace Schafkopf.Models
         public Playing IsPlaying => _IsPlaying;
         public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
         public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
+        public bool WantToKnock => _WantToKnock;
         public List<Player> SpectatorsWaitingForApproval => _SpectatorsWaitingForApproval.Cast<Player>().ToList();
 
         public bool WantToPlay => _WantToPlay;
@@ -68,6 +73,7 @@ namespace Schafkopf.Models
         GameType Player.AnnouncedGameType => _AnnouncedGameType;
 
         public bool WantToPlayAnswered => _WantToPlayAnswered;
+        public bool WantToKnockAnswered => _WantToKnockAnswered;
 
         public PlayerState(String name, String connectionId)
         {
@@ -83,6 +89,8 @@ namespace Schafkopf.Models
             _IsPlaying = Playing.Undecided;
             _WantToPlay = false;
             _WantToPlayAnswered = false;
+            _WantToKnock = false;
+            _WantToKnockAnswered = false;
             _AnnouncedGameType = GameType.Ramsch;
             _AnnouncedColor = Color.None;
             Spectators = new List<PlayerState>();
@@ -127,6 +135,12 @@ namespace Schafkopf.Models
         {
             _WantToPlay = wantToPlay;
             _WantToPlayAnswered = true;
+        }
+
+        public void Knock(bool wantToKnock)
+        {
+            _WantToKnock = wantToKnock;
+            _WantToKnockAnswered = true;
         }
 
         //-------------------------------------------------
@@ -370,6 +384,11 @@ namespace Schafkopf.Models
 
         public string GetCurrentInfo(Game game)
         {
+            Random rnd = new Random();
+            var getRandomAnswer = (string[] answers) =>
+            {
+                return answers[rnd.Next(answers.Length)];
+            };
             if (game.GameState.CurrentGameState == State.AnnounceHochzeit || game.GameState.CurrentGameState == State.HochzeitExchangeCards)
             {
                 if (game.GameState.Leader == this)
@@ -406,24 +425,28 @@ namespace Schafkopf.Models
             }
             else if (game.GameState.CurrentGameState == State.AnnounceGameType || (game.GameState.CurrentGameState == State.Announce && _WantToPlayAnswered))
             {
-                if (string.IsNullOrEmpty(_Answer)) // Determine Answer
+                if (string.IsNullOrEmpty(_AnnounceAnswer)) // Determine Answer
                 {
-                    Random rnd = new Random();
-                    var getRandomAnswer = (string[] answers) =>
-                    {
-                        return answers[rnd.Next(answers.Length)];
-                    };
+                    
                     if (_WantToPlay)
                     {
-                        _Answer = getRandomAnswer(new string[]{"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"});
+                        _AnnounceAnswer = getRandomAnswer(new string[]{"Dat", "Ich dat", "Ich würde", "Dat scho", "Ich hab was"});
                         
                     }
                     else
                     {
-                        _Answer = getRandomAnswer(new string[]{"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"});
+                        _AnnounceAnswer = getRandomAnswer(new string[]{"Weiter", "Nix", "Weg", "Fuera", "Nein", "Naa"});
                     }
                 }
-                return _Answer;
+                return _AnnounceAnswer;
+            }
+            if (game.GameState.CurrentGameState == State.Knock)
+            {
+                if (string.IsNullOrEmpty(_KnockAnswer) && WantToKnock)
+                {
+                    _KnockAnswer = getRandomAnswer(new string[]{"Ich klopfe", "Klopfe", "Mach einen Strich", "Strichla"});
+                }
+                return _KnockAnswer;
             }
             return "";
         }

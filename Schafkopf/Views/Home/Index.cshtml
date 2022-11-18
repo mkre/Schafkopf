@@ -2,8 +2,7 @@
         <div class="d-flex flex-grow-1 overflow-hidden">
             <div class="game col-9 overflow-hidden d-flex flex-column  pl-0 pr-0">
                 <div class="flex-grow-1 w-100" style="transform: translateY(0);">
-                    <div class="card-on-table float-box" id="game-info">
-                    </div>
+                    <div class="card-on-table float-box" id="game-info"></div>
                     <img src="" class="card-on-table" id="card-left">
                     <img src="" class="card-on-table" id="card-right">
                     <img src="" class="card-on-table" id="card-top">
@@ -67,6 +66,20 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="announceNoButton">Nein</button>
         <button type="button" class="btn btn-primary" id="announceYesButton">Ja</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade text-dark" id="knockModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Willst du klopfen?</h5>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="knockNoButton">Lieber nicht</button>
+        <button type="button" class="btn btn-primary" id="knockYesButton">Ja</button>
       </div>
     </div>
   </div>
@@ -226,6 +239,12 @@
           <input class="form-check-input" type="checkbox" name="newTableOption" id="bettelEnabledCheck" checked disabled>
           <label class="form-check-label" for="bettelEnabledCheck">
             Bettel
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="newTableOption" id="klopfenEnabledCheck" checked disabled>
+          <label class="form-check-label" for="klopfenEnabledCheck">
+            Klopfen
           </label>
         </div>
       </div>

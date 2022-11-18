@@ -39,6 +39,38 @@ namespace Schafkopf.Hubs
                 await Clients.Client(connectionId).SendAsync("ReceiveChatMessage", user, message);
             }
         }
+
+        public async Task Knock(bool wantToKnock)
+        {
+            Game game = ((Game)Context.Items["game"]);
+            Player player = (Player)Context.Items["player"];
+            if (game.GameState.CurrentGameState == State.Knock)
+            {
+                if (wantToKnock)
+                {
+                    foreach (String connectionId in game.GetPlayersConnectionIds())
+                    {
+                        await Clients.Client(connectionId).SendAsync(
+                            "ReceiveGameInfo",
+                            $"{player.Name} klopft"
+                        );
+                    }
+                }
+                foreach (String connectionId in player.GetConnectionIdsWithSpectators())
+                {
+                    await Clients.Client(connectionId).SendAsync("CloseKnockModal");
+                }
+                game.GameState.Knock(player, wantToKnock);
+                await game.SendPlayers(this);
+                if (game.GameState.PlayingPlayers.All(p => p.WantToKnockAnswered))
+                {
+                    game.GameState.CurrentGameState = State.AnnounceHochzeit;
+                    await game.FinalizeDealCards(this);
+                    return;
+                }
+            }
+        }
+
         public async Task Announce(bool wantToPlay)
         {
             Game game = ((Game)Context.Items["game"]);
@@ -264,7 +296,7 @@ namespace Schafkopf.Hubs
                 }
             }
         }
-        public async Task AddPlayer(string userName, string gameId, bool isShortHand, bool withBettel, bool withHochzeit)
+        public async Task AddPlayer(string userName, string gameId, bool isShortHand, bool withBettel, bool withHochzeit, bool withKlopfen)
         {
             Game game;
             Player player;
@@ -311,6 +343,7 @@ namespace Schafkopf.Hubs
                 rules.isShortHand = isShortHand;
                 rules.isBettelEnabled = withBettel;
                 rules.isHochzeitEnabled = withHochzeit;
+                rules.isKlopfenEnabled = withKlopfen;
                 game = new Game(rules);
                 Games[gameId] = game;
             }

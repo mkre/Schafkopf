@@ -104,6 +104,9 @@
   top: 5px;
   margin-left:0;
   max-width: 30%;
+  white-space: pre; /* required for newline in textConent */
+  text-align: left;
+  font-size: small;
 }
 
 #take-trick-btn {
@@ -121,7 +124,7 @@
   line-height: 1.3vw;
 }
 
-#announceModal {
+#announceModal, #knockModal {
   position: absolute;
   width: 25vw;
   left: 25vw;

@@ -114,6 +114,7 @@ function init() {
     hideModal('#gameOverModal');
     hideModal('#gameIdModal');
     hideModal('#announceModal');
+    hideModal('#knockModal');
     hideModal('#announceGameTypeModal');
     hideModal('#gameColorModal');
     hideModal('#wantToPlayModal');
@@ -195,8 +196,7 @@ function init() {
   });
 
   connection.on("OpenWantToKnockModal", function (message) {
-    document.getElementById("announceModalTitle").textContent = "Willst du klopfen?";
-    showModal('#announceModal');
+    showModal('#knockModal');
   });
 
   connection.on("AskWantToPlay", function (players, startPlayer, proposal) {
@@ -242,6 +242,10 @@ function init() {
 
   connection.on("CloseAnnounceModal", function () {
     hideModal('#announceModal');
+  });
+
+  connection.on("CloseKnockModal", function () {
+    hideModal('#knockModal');
   });
 
   connection.on("CloseAnnounceGameTypeModal", function () {
@@ -307,7 +311,11 @@ function init() {
 
   connection.on("ReceiveGameInfo", function (message) {
     const info = document.getElementById("game-info");
-    info.textContent = message;
+    if (info.textContent == "" && message != "") {
+      info.textContent = message;
+    } else {
+      info.textContent += "\r\n" + message;
+    }
   });
 
   connection.on("ReceiveTrick", function (cards) {
@@ -421,6 +429,24 @@ document
   });
 
 document
+  .getElementById("knockYesButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("Knock", true).catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+  document
+  .getElementById("knockNoButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("Knock", false).catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
   .getElementById("announceYesButton")
   .addEventListener("click", function (event) {
     connection.invoke("Announce", true).catch(function (err) {
@@ -522,10 +548,11 @@ document
     const isShortHand = localStorage.getItem("isShortHand") === 'true';
     const isBettelEnabled = localStorage.getItem("bettelEnabled") === 'true';
     const isHochzeitEnabled = localStorage.getItem("hochzeitEnabled") === 'true';
+    const isKlopfenEnabled = localStorage.getItem("klopfenEnabled") === 'true';
 
     document.getElementById("startModalUserName").value = "";
     connection
-      .invoke("AddPlayer", userName, searchParams.get("game"), isShortHand, isBettelEnabled, isHochzeitEnabled)
+      .invoke("AddPlayer", userName, searchParams.get("game"), isShortHand, isBettelEnabled, isHochzeitEnabled, isKlopfenEnabled)
       .catch(function (err) {
         return console.error(err.toString());
       });
@@ -613,6 +640,7 @@ document
     localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
     localStorage.setItem("bettelEnabled", document.getElementById("bettelEnabledCheck").checked);
     localStorage.setItem("hochzeitEnabled", document.getElementById("hochzeitEnabledCheck").checked);
+    localStorage.setItem("klopfenEnabled", document.getElementById("klopfenEnabledCheck").checked);
     // TODO: Invoke a CreateGame task here instead of storing these to localStorage and processing in AddPlayer
     tryReconnect();
     event.preventDefault();

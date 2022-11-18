@@ -46,6 +46,7 @@ namespace Schafkopf.Models
                 await hub.Clients.Client(connectionId).SendAsync("CloseGameOverModal");
                 await hub.Clients.Client(connectionId).SendAsync("CloseWantToSpectateModal");
                 await hub.Clients.Client(connectionId).SendAsync("CloseAllowSpectatorModal");
+                await hub.Clients.Client(connectionId).SendAsync("CloseKnockModal");
             }
             foreach (Player player in GameState.Players)
             {
@@ -82,20 +83,32 @@ namespace Schafkopf.Models
             }
 
             GameState.StartGame();
+            
+            if (GameState.Rules.isKlopfenEnabled)
+            {
+                foreach (Player player in GameState.PlayingPlayers)
+                {
+                    await player.SendHalfHand(hub);
+                }
+
+                GameState.CurrentGameState = State.Knock;
+
+                await SendAskKnock(hub);
+            }
+            else
+            {
+                await FinalizeDealCards(hub);
+            }
+        }
+
+        public async Task FinalizeDealCards(SchafkopfHub hub)
+        {
             foreach (Player player in GameState.PlayingPlayers)
             {
-                // await player.SendHalfHand(hub);
                 await player.SendHand(hub);
             }
 
             await SendStartPlayer(hub, GetPlayingPlayersConnectionIds());
-
-            // foreach (String connectionId in GetPlayingPlayersConnectionIds())
-            // {
-            //     await hub.Clients.Client(connectionId).SendAsync("OpenWantToKnockModal");
-            // }
-
-            
             if (await CheckIfOnePlayerHas6Nixerl(hub))
             {
                 return;
@@ -487,6 +500,14 @@ namespace Schafkopf.Models
             }
         }
 
+        public async Task SendAskKnock(SchafkopfHub hub)
+        {
+            foreach (String connectionId in GetPlayersConnectionIds())
+            {
+                await hub.Clients.Client(connectionId).SendAsync("OpenWantToKnockModal");
+            }
+        }
+
         public async Task SendAskAnnounceHochzeit(SchafkopfHub hub)
         {
             if (GameState.AnnouncedGame == GameType.Hochzeit && GameState.PlayingPlayers.Any(p => p != GameState.Leader && !p.HasAnsweredMarriageOffer))
@@ -669,6 +690,10 @@ $@"
             if (GameState.CurrentGameState == State.HochzeitExchangeCards && player == GameState.HusbandWife)
             {
                 await SendAskExchangeCards(hub, connectionIds);
+            }
+            if (GameState.CurrentGameState == State.Knock)
+            {
+                await SendAskKnock(hub);
             }
         }
 
