@@ -2,11 +2,7 @@
     "name": "Dotnet",
     "dockerFile": "Dockerfile",
     "extensions": [
-        "ms-dotnettools.csharp",
-    ],
-    "mounts": [
-        "src=${localEnv:HOME}/.ssh,dst=/home/cirrus/.ssh,type=bind",
-        "src=${localEnv:HOME}/.gitconfig,dst=/home/cirrus/.gitconfig,type=bind",
+        "ms-dotnettools.csharp"
     ],
     "forwardPorts": [
         5000,
