@@ -252,7 +252,7 @@ namespace Schafkopf.Models
                     !IsRunaway
                 )
                 {
-                    if (game.GameState.TrickCount < 6)
+                    if (game.GameState.TrickCount < game.GameState.inital_number_of_cards_per_player - 2)
                     {
                         return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
                     }
@@ -277,7 +277,7 @@ namespace Schafkopf.Models
                 !IsRunaway
             )
             {
-                if (game.GameState.TrickCount < 6)
+                if (game.GameState.TrickCount < game.GameState.inital_number_of_cards_per_player - 2)
                 {
                     return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
                 }
