@@ -90,6 +90,7 @@ namespace Schafkopf.Models
             _WantToPlay = false;
             _WantToPlayAnswered = false;
             _WantToKnock = false;
+            _KnockAnswer = null;
             _WantToKnockAnswered = false;
             _AnnouncedGameType = GameType.Ramsch;
             _AnnouncedColor = Color.None;
