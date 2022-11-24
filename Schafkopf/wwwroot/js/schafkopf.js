@@ -325,6 +325,7 @@ function init() {
     } else {
       info.textContent += "\r\n" + message;
     }
+    info.scrollTop = info.scrollHeight;
   });
 
   connection.on("ReceiveTrick", function (cards) {

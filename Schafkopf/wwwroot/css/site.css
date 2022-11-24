@@ -107,6 +107,9 @@
   white-space: pre; /* required for newline in textConent */
   text-align: left;
   font-size: small;
+  max-height: calc(50% - 1.7rem);
+  overflow: auto !important; /* add scrollbar */
+  pointer-events: auto !important; /* required to make scrollbar actually work */
 }
 
 #take-trick-btn {
