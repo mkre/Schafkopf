@@ -223,7 +223,7 @@ namespace Schafkopf.Models
         {
             foreach (String connectionId in connectionIds)
             {
-                await hub.Clients.Client(connectionId).SendAsync("ReceiveGameInfo", "");
+                await hub.Clients.Client(connectionId).SendAsync("ReceiveGameInfo", "\n#### Neues Spiel beginnt ####");
             }
         }
 
@@ -653,6 +653,10 @@ $@"
                 }
                 await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
                 await SendTakeTrickButton(hub, connectionIds);
+            }
+            else if (GameState.CurrentGameState == State.Knock)
+            {
+                await player.SendHalfHand(hub);
             }
             else
             {
