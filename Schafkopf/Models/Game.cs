@@ -304,7 +304,7 @@ namespace Schafkopf.Models
             //Show the amount of pointfor each team
             if (GameState.AnnouncedGame > 0)
             {
-                (int leaderPoints, int followerPoints) = GameState.GetFinalPoints();
+                (int leaderPoints, int followerPoints, string leaderNames, string followerNames) = GameState.GetFinalPointsAndTeams();
                 string gameOverTitle = "";
 
                 //Special case: Bettel, Bettel Ouvert
@@ -312,11 +312,11 @@ namespace Schafkopf.Models
                 {
                     if (leaderPoints == 0)
                     {
-                        gameOverTitle = "Der Bettel-Spieler hat gewonnen";
+                        gameOverTitle = leaderNames + " hat den Bettel gewonnen";
                     }
                     else
                     {
-                        gameOverTitle = "Der Bettel-Spieler hat verloren";
+                        gameOverTitle = leaderNames + " hat den Bettel verloren";
                     }
                 }
                 else
@@ -330,12 +330,20 @@ namespace Schafkopf.Models
                         gameOverTitle = "Die Spieler haben gewonnen";
                     }
                 }
+
+                string gameOverMessage = leaderNames + ": " + leaderPoints.ToString() + " Punkte ||| " + followerNames + ": " + followerPoints.ToString() + " Punkte";
+
                 foreach (String connectionId in connectionIds)
                 {
                     await hub.Clients.Client(connectionId).SendAsync(
                         "GameOver",
                         gameOverTitle,
-                        $"Spieler: {leaderPoints} Punkte, Andere: {followerPoints} Punkte"
+                        gameOverMessage
+                    );
+
+                    await hub.Clients.Client(connectionId).SendAsync(
+                        "ReceiveGameInfo",
+                        gameOverMessage
                     );
                 }
             }
@@ -349,12 +357,21 @@ namespace Schafkopf.Models
                 }
 
                 player.OrderBy(o => o.Balance).ToList();
+
+                string gameOverMessage = String.Join(", ", player.Select(p => $"{p.Name}: {p.Balance} Punkte"));
+
                 foreach (String connectionId in connectionIds)
                 {
                     await hub.Clients.Client(connectionId).SendAsync(
-                    "GameOver",
-                    "Ramsch vorbei",
-                    String.Join(", ", player.Select(p => $"{p.Name}: {p.Balance} Punkte")));
+                        "GameOver",
+                        "Ramsch vorbei",
+                        gameOverMessage
+                    );
+
+                    await hub.Clients.Client(connectionId).SendAsync(
+                        "ReceiveGameInfo",
+                        gameOverMessage
+                    );
                 }
 
             }

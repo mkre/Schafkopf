@@ -130,22 +130,40 @@ namespace Schafkopf.Logic
                     return Color.None;
             }
         }
-        internal (int leaderPoints, int followerPoints) GetFinalPoints()
+        internal (int leaderPoints, int followerPoints, string leaderNames, string followerNames ) GetFinalPointsAndTeams()
         {
             int leaderPoints = 0;
             int followerPoints = 0;
+            string leaderNames = "";
+            string followerNames = "";
             for (int i = 0; i < 4; i++)
             {
                 if (_Groups[i] == 0)
                 {
                     followerPoints += _PlayingPlayers[i].Balance;
+                    if (string.IsNullOrEmpty(followerNames))
+                    {
+                        followerNames = _PlayingPlayers[i].Name;
+                    }
+                    else
+                    {
+                        followerNames += ", " + _PlayingPlayers[i].Name;
+                    }
                 }
                 else
                 {
                     leaderPoints += _PlayingPlayers[i].Balance;
+                    if (string.IsNullOrEmpty(leaderNames))
+                    {
+                        leaderNames = _PlayingPlayers[i].Name;
+                    }
+                    else
+                    {
+                        leaderNames += ", " + _PlayingPlayers[i].Name;
+                    }
                 }
             }
-            return (leaderPoints, followerPoints);
+            return (leaderPoints, followerPoints, leaderNames, followerNames);
         }
         internal void IncrementActionPlayer()
         {
