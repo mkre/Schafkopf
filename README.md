@@ -1,9 +1,9 @@
 # Schafkopf
-This is an Open Source implementation of the bavarian card game **Schafkopf**.
+This is an Open Source implementation of the bavarian card game **Schafkopf**, forked from https://github.com/thielepaul/Schafkopf and enhanced. It's work in progress.
 
-Feel free to check out the demo at: https://schafkopf.p4u1.de
+Build and run it on your own server with docker: `docker build Schafkopf -t schafkopf && docker run -p 80:80 schafkopf`.
 
-Or run it on your own server with docker: `docker run -p 9080:80 -p 9443:443 thielepaul/schafkopf`
+When trying out, note that first all 4 players must connect. Use Firefox' Multi-Account Container Extension or similar.
 
 What can this app offer you:
 * Play Schafkopf with friends in their browser
@@ -16,9 +16,12 @@ Note, that this is a German game so everything in the game is in German.
 ## Features
 * Sauspiel
 * Farbsolo
+* Bettel (w/o Heart as trump)
 * Wenz
+* Geier
 * Hochzeit
 * Ramsch
+* Legen/Klopfen after one has received half of the cards
 * Chat
 * More than 4 Players (additional players can spectate if not playing)
 
