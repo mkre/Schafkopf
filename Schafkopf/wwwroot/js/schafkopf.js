@@ -3,6 +3,12 @@
 const modalState = {};
 modalState["#reconnectModal"] = false;
 
+var stylesheet;
+var cardOnTableCSSItemStyle;
+// Variables to store z-indices (-> CSS) of cards on table
+var zIndexCardsCurrentTrick = [-5, -5, -5, -5];
+var zIndexCardsLastTrick = [-5, -5, -5, -5];
+
 try {
   setTheme(localStorage.getItem("theme"));
 } catch { }
@@ -98,7 +104,32 @@ function setTheme(theme) {
   }
 }
 
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min) + min);
+}
+
+function getZIndexOfCardsOnTable() {
+  return [
+    parseInt(cardOnTableCSSItemStyle.getPropertyValue('--zIndexCardBottom')),
+    parseInt(cardOnTableCSSItemStyle.getPropertyValue('--zIndexCardLeft')),
+    parseInt(cardOnTableCSSItemStyle.getPropertyValue('--zIndexCardTop')),
+    parseInt(cardOnTableCSSItemStyle.getPropertyValue('--zIndexCardRight'))
+  ];
+}
+
+function setZIndexOfCardsOnTable(z_bottom, z_left, z_top, z_right) {
+  cardOnTableCSSItemStyle.setProperty('--zIndexCardBottom',z_bottom);
+  cardOnTableCSSItemStyle.setProperty('--zIndexCardLeft',z_left);
+  cardOnTableCSSItemStyle.setProperty('--zIndexCardTop',z_top);
+  cardOnTableCSSItemStyle.setProperty('--zIndexCardRight',z_right);
+}
+
 function init() {
+  stylesheet = document.styleSheets[1];
+  cardOnTableCSSItemStyle = [...stylesheet.cssRules].find((r) => r.selectorText === ".card-on-table").style;
+
   connection.onclose(() => {
     document.getElementById("game-info").textContent = "";
     document.getElementById("hand").innerHTML = "";
@@ -329,6 +360,21 @@ function init() {
   });
 
   connection.on("ReceiveTrick", function (cards) {
+    zIndexCardsCurrentTrick = getZIndexOfCardsOnTable();
+    // Update z-indices (-> CSS) of cards on table if <4 cards are on table: increment based on z-index of predessor card (if existent)
+    if (!(cards[0] != "" && cards[1] != "" && cards[2] != "" && cards[3] != "")) {
+      var zIndexCardBottom = cards[3] != "" ? zIndexCardsCurrentTrick[3]+1 : -5;
+      var zIndexCardLeft= cards[0] != "" ? zIndexCardsCurrentTrick[0]+1 : -5;
+      var zIndexCardTop = cards[1] != "" ? zIndexCardsCurrentTrick[1]+1 : -5;
+      var zIndexCardRight = cards[2] != "" ? zIndexCardsCurrentTrick[2]+1 : -5;
+      setZIndexOfCardsOnTable(zIndexCardBottom, zIndexCardLeft, zIndexCardTop, zIndexCardRight);
+      zIndexCardsCurrentTrick = [zIndexCardBottom, zIndexCardLeft, zIndexCardTop, zIndexCardRight];
+    }
+    // Store z-indices for "see last trick button"
+    else
+    {
+      zIndexCardsLastTrick = zIndexCardsCurrentTrick;
+    }
     document.getElementById("card-bottom").src = cards[0] != "" ? `/carddecks/noto/${cards[0]}.svg` : "/carddecks/blank.svg";
     document.getElementById("card-left").src = cards[1] != "" ? `/carddecks/noto/${cards[1]}.svg` : "/carddecks/blank.svg";
     document.getElementById("card-top").src = cards[2] != "" ? `/carddecks/noto/${cards[2]}.svg` : "/carddecks/blank.svg";
@@ -361,6 +407,15 @@ function init() {
       case "hidden":
         content.textContent = "";
         btn.classList.add("d-none");
+        // Random rotation and translation for next trick
+        cardOnTableCSSItemStyle.setProperty('--rotateCardBottom',getRandomInt(-15,15) + 'deg');
+        cardOnTableCSSItemStyle.setProperty('--translateCardBottom',getRandomInt(15,225)/10 + '%');
+        cardOnTableCSSItemStyle.setProperty('--rotateCardLeft',getRandomInt(75,105) + 'deg');
+        cardOnTableCSSItemStyle.setProperty('--translateCardLeft',getRandomInt(15,225)/10 + '%');
+        cardOnTableCSSItemStyle.setProperty('--rotateCardTop',getRandomInt(165,195) + 'deg');
+        cardOnTableCSSItemStyle.setProperty('--translateCardTop',getRandomInt(15,225)/10 + '%');
+        cardOnTableCSSItemStyle.setProperty('--rotateCardRight',getRandomInt(255,285) + 'deg');
+        cardOnTableCSSItemStyle.setProperty('--translateCardRight',getRandomInt(15,225)/10 + '%');
         break;
       case "won":
         content.textContent = "Stich nehmen!";
@@ -667,11 +722,13 @@ document
   .getElementById("toggleLastTrickButton")
   .addEventListener("click", function (event) {
     if (document.getElementById("toggleLastTrickButton").textContent.trim() == "Letzten Stich verstecken") {
+      setZIndexOfCardsOnTable(zIndexCardsCurrentTrick[0], zIndexCardsCurrentTrick[1], zIndexCardsCurrentTrick[2], zIndexCardsCurrentTrick[3]);
       connection
         .invoke("ShowLastTrick", false).catch(function (err) {
           return console.error(err.toString());
         });
     } else if (document.getElementById("toggleLastTrickButton").textContent.trim() == "Letzten Stich zeigen") {
+      setZIndexOfCardsOnTable(zIndexCardsLastTrick[0], zIndexCardsLastTrick[1], zIndexCardsLastTrick[2], zIndexCardsLastTrick[3]);
       connection
         .invoke("ShowLastTrick", true).catch(function (err) {
           return console.error(err.toString());

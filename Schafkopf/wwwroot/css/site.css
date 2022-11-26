@@ -8,6 +8,18 @@
   z-index: 0;
   pointer-events: none;
   top: 50%;
+  --rotateCardBottom: 5deg;
+  --rotateCardLeft: 85deg;
+  --rotateCardTop: 173deg;
+  --rotateCardRight: 273deg;
+  --zIndexCardBottom: -5;
+  --zIndexCardLeft: -5;
+  --zIndexCardTop: -5;
+  --zIndexCardRight: -5;
+  --translateCardBottom: 7.5%;
+  --translateCardLeft: 5.5%;
+  --translateCardTop: 17.5%;
+  --translateCardRight: 23.5%;
 }
 
 #hand {
@@ -15,19 +27,23 @@
 }
 
 #card-right {
-  transform: rotate(270deg) translateY(27.5%);
+  transform: rotateZ(var(--rotateCardRight)) translateY(var(--translateCardRight));
+  z-index: var(--zIndexCardRight);
 }
 
 #card-left {
-  transform: rotate(90deg) translateY(27.5%);
+  transform: rotateZ(var(--rotateCardLeft)) translateY(var(--translateCardLeft));
+  z-index: var(--zIndexCardLeft);
 }
 
 #card-bottom {
-  transform: translateY(27.5%);
+  transform: rotateZ(var(--rotateCardBottom)) translateY(var(--translateCardBottom));
+  z-index: var(--zIndexCardBottom);
 }
 
 #card-top {
-  transform: rotate(180deg) translateY(27.5%);
+  transform: rotateZ(var(--rotateCardTop)) translateY(var(--translateCardTop));
+  z-index: var(--zIndexCardTop);
 }
 
 .game {
@@ -60,6 +76,7 @@
   width: auto;
   transform: translateY(-50%);
   left: auto;
+  z-index: 50;
 }
 
 #player-left {
@@ -67,6 +84,7 @@
   width: auto;
   transform: translateY(-50%);
   right: auto;
+  z-index: 50;
 }
 
 #player-bottom {
@@ -75,12 +93,14 @@
   top: auto;
   bottom: 5px;
   pointer-events: all;
+  z-index: 50;
 }
 
 #player-top {
   max-width: 30%;
   width: auto;
   top: 5px;
+  z-index: 50;
 }
 
 #player-left-name {
@@ -118,6 +138,8 @@
   transform: translateY(-50%);
   pointer-events: all;
   position: absolute;
+  z-index: 60;
+  opacity: 0.75;
 }
 
 #take-trick-btn-content {
