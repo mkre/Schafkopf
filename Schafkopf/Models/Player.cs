@@ -112,9 +112,10 @@ namespace Schafkopf.Models
             {
                 if (card.Color == cardColor && card.Number == cardNumber)
                 {
-                    if (!CanCardBePlayed(game, card))
+                    var (canCardBePlayedBool, message) = CanCardBePlayed(game, card);
+                    if (!canCardBePlayedBool)
                     {
-                        string message = "Die Karte kannst du gerade nicht spielen!";
+                        // string message = "Die Karte kannst du gerade nicht spielen!";
                         return (null, message);
                     }
                     HandCards.Remove(card);
@@ -223,67 +224,82 @@ namespace Schafkopf.Models
             }
         }
 
-        private bool CanCardBePlayed(Game game, Card card)
+        private (bool, string) CanCardBePlayed(Game game, Card card)
         {
+            // First Card in trick
             if (game.GameState.Trick.FirstCard == null)
             {
+                // GameType is Sauspiel, Player has Searched Sau and can't run away (yet) 
                 if (game.GameState.AnnouncedGame == GameType.Sauspiel &&
                     HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                     !IsRunaway)
                 {
-                    // Davonlaufen
+                    // Davonlaufen / run away: Player has even or more than 3 cards of announced color
                     if (HandColorCount(game.GameState.Leader.AnnouncedColor, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) >= 4)
                     {
                         IsRunaway = true;
-                        return true;
+                        return (true,"");
                     }
-                    return card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) || card.Color != game.GameState.Leader.AnnouncedColor || card.Number == 11;
+                    // Allowed to play Trump, a color different to the announced one or a card of the same color but not the searched Sau (Note: This is different from Schafkopschule rules!!!)
+                    return (card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) || card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11, "Du darfst die gesuchte Sau nicht anspielen!");
                 }
-                return true;
+                return (true,"");
             }
+            // Trump was played as first card
             else if (game.GameState.Trick.FirstCard.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()))
             {
+                // If Player has Trump card(s), he's only allowed to play Trump
                 if (HandContainsTrump(game))
                 {
-                    return card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor());
+                    return (card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()), "Du musst Trumpf zugeben");
                 }
+                // Player doesn't have Trump, GameType is Sauspiel, Player has Searched Sau and can't run away
                 if (
                     game.GameState.AnnouncedGame == GameType.Sauspiel &&
                     HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                     !IsRunaway
                 )
                 {
-                    if (game.GameState.TrickCount < game.GameState.inital_number_of_cards_per_player - 2)
+                    // If it's not the last trick, Player is not allowed to play the searched Sau
+                    if (game.GameState.TrickCount < game.GameState.initial_number_of_cards_per_player - 1)
                     {
-                        return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
+                        return (card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11, "Du darfst die gesuchte Sau nicht schmieren");
                     }
                 }
-                return true;
+                // Otherwise, it's allowed to play the card
+                return (true, "");
             }
+            // No Trump was played first --> Color card was played first and Player has the same color
             else if (HandContainsColor(game.GameState.Trick.FirstCard.Color, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()))
             {
+                // GameType is Sauspiel, played color is announced color and player has the Searched Sau --> Only searched Sau is allowed (bedienen)
                 if (
                     game.GameState.AnnouncedGame == GameType.Sauspiel &&
                     game.GameState.Trick.FirstCard.Color == game.GameState.Leader.AnnouncedColor &&
                     HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor)
                 )
                 {
-                    return card.Color == game.GameState.Trick.FirstCard.Color && card.Number == 11;
+                    return (card.Color == game.GameState.Trick.FirstCard.Color && card.Number == 11,"Du musst die gerufene Sau zugeben!");
                 }
-                return !card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) && card.Color == game.GameState.Trick.FirstCard.Color;
+                // Only same color (no Trump) is allowed
+                return (!card.IsTrump(game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) && card.Color == game.GameState.Trick.FirstCard.Color, "Du musst die Farbe zugeben");
             }
+            // No Trump was played first --> Color card was played first and Player doesn't have the same color, but
+            // it's a Sauspiel, Player has the searched Sau and cannot run away
             else if (
                 game.GameState.AnnouncedGame == GameType.Sauspiel &&
                 HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
                 !IsRunaway
             )
             {
-                if (game.GameState.TrickCount < game.GameState.inital_number_of_cards_per_player - 2)
+                // If we're not in the very last trick, playing the searched Sau is not allowed
+                if (game.GameState.TrickCount < game.GameState.initial_number_of_cards_per_player - 1)
                 {
-                    return card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11;
+                    return (card.Color != game.GameState.Leader.AnnouncedColor || card.Number != 11, "Du darfst die gesuchte Sau nicht spielen!");
                 }
             }
-            return true;
+            // Default case: true
+            return (true, "");
         }
 
         private int HandColorCount(Color color, GameType gameType, Color trump)

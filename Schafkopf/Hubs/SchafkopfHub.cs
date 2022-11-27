@@ -465,7 +465,7 @@ namespace Schafkopf.Hubs
             if (game.GameState.Trick.Count == 4 && game.GameState.Trick.Winner == player)
             {
                 game.GameState.TakeTrick();
-                if (game.GameState.TrickCount == game.GameState.inital_number_of_cards_per_player)
+                if (game.GameState.TrickCount == game.GameState.initial_number_of_cards_per_player)
                 {
                     await game.SendEndGameModal(this, game.GetPlayingPlayersConnectionIds());
                 }

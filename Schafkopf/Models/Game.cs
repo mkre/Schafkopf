@@ -681,7 +681,7 @@ $@"
                 await SendStartPlayer(hub, connectionIds);
             }
             // send modals
-            if (GameState.CurrentGameState == State.Playing && GameState.TrickCount == GameState.inital_number_of_cards_per_player)
+            if (GameState.CurrentGameState == State.Playing && GameState.TrickCount == GameState.initial_number_of_cards_per_player)
             {
                 await SendEndGameModal(hub, connectionIds);
             }

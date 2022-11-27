@@ -60,7 +60,7 @@ namespace Schafkopf.Logic
                 }
             }
         }
-        public int inital_number_of_cards_per_player => _initial_number_of_cards_per_player;
+        public int initial_number_of_cards_per_player => _initial_number_of_cards_per_player;
         public int TrickCount => _TrickCount;
         public State CurrentGameState
         {
