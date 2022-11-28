@@ -94,6 +94,7 @@ namespace Schafkopf.Models
             _WantToKnockAnswered = false;
             _AnnouncedGameType = GameType.Ramsch;
             _AnnouncedColor = Color.None;
+            _AnnounceAnswer = null;
             Spectators = new List<PlayerState>();
             _SpectatorsWaitingForApproval = new Queue<PlayerState>();
             IsRunaway = false;
