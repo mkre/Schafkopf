@@ -12,7 +12,7 @@ namespace Schafkopf.UnitTests
         [Fact]
         public void ShuffleTest()
         {
-            Carddeck carddeck = new Carddeck();
+            Carddeck carddeck = new Carddeck(true);
 
             Assert.False(carddeck.Shuffle().SequenceEqual(carddeck.Shuffle()));
         }
