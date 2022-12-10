@@ -178,26 +178,43 @@ namespace Schafkopf.Models
                 return;
             }
             String message = "";
-            if (GameState.AnnouncedGame == GameType.Farbsolo)
+            switch (GameState.AnnouncedGame)
             {
-                message = $"{GameState.Leader.Name} spielt ein {GameState.Leader.AnnouncedColor}-Solo";
+                case GameType.Ramsch:
+                    message = $"Es wird geramscht!";
+                    break;
+                case GameType.Hochzeit:
+                    message = $"{GameState.Leader.Name} (kein Trumpf) und {GameState.HusbandWife.Name} spielen eine Hochzeit!";
+                    break;
+                case GameType.Sauspiel:
+                    message = $"{GameState.Leader.Name} spielt auf die {GameState.Leader.AnnouncedColor}-Sau";
+                    break;
+                case GameType.Geier:
+                    message = $"{GameState.Leader.Name} spielt einen Geier";
+                    break;
+                case GameType.Wenz:
+                    message = $"{GameState.Leader.Name} spielt einen Wenz";
+                    break;
+                case GameType.Bettel:
+                    message = $"{GameState.Leader.Name} spielt einen Bettel";
+                    break;
+                case GameType.Farbsolo:
+                    message = $"{GameState.Leader.Name} spielt ein {GameState.Leader.AnnouncedColor}-Solo";
+                    break;
+                case GameType.GeierTout:
+                    message = $"{GameState.Leader.Name} spielt einen Geier-Tout";
+                    break;
+                case GameType.WenzTout:
+                    message = $"{GameState.Leader.Name} spielt einen Wenz-Tout";
+                    break;
+                case GameType.FarbsoloTout:
+                    message = $"{GameState.Leader.Name} spielt ein {GameState.Leader.AnnouncedColor}-Solo-Tout";
+                    break;
+                default:
+                    message = $"{GameState.Leader.Name} spielt {GameState.AnnouncedGame}";
+                    break;
             }
-            else if (GameState.AnnouncedGame == GameType.Sauspiel)
-            {
-                message = $"{GameState.Leader.Name} spielt auf die {GameState.Leader.AnnouncedColor}-Sau";
-            }
-            else if (GameState.AnnouncedGame == GameType.Ramsch)
-            {
-                message = $"Es wird geramscht!";
-            }
-            else if (GameState.AnnouncedGame == GameType.Hochzeit)
-            {
-                message = $"{GameState.Leader.Name} (kein Trumpf) und {GameState.HusbandWife.Name} spielen eine Hochzeit!";
-            }
-            else
-            {
-                message = $"{GameState.Leader.Name} spielt {GameState.AnnouncedGame}";
-            }
+
             foreach (String connectionId in connectionIds)
             {
                 await hub.Clients.Client(connectionId).SendAsync("ReceiveGameInfo", message);
@@ -302,7 +319,7 @@ namespace Schafkopf.Models
         public async Task SendEndGameModal(SchafkopfHub hub, List<String> connectionIds)
         {
             //Show the amount of pointfor each team
-            if (GameState.AnnouncedGame > 0)
+            if (GameState.AnnouncedGame != GameType.Ramsch)
             {
                 (int leaderPoints, int followerPoints, string leaderNames, string followerNames) = GameState.GetFinalPointsAndTeams();
                 string gameOverTitle = "";
@@ -317,6 +334,34 @@ namespace Schafkopf.Models
                     else
                     {
                         gameOverTitle = leaderNames + " hat den Bettel verloren";
+                    }
+                }
+                else if (GameState.AnnouncedGame == GameType.GeierTout || GameState.AnnouncedGame == GameType.WenzTout || GameState.AnnouncedGame == GameType.FarbsoloTout)
+                {
+                    gameOverTitle = leaderNames + " hat ";
+                    switch (GameState.AnnouncedGame)
+                    {
+                        case GameType.GeierTout:
+                            gameOverTitle += "den Geier-Tout";
+                            break;
+                        case GameType.WenzTout:
+                            gameOverTitle += "den Wenz-Tout";
+                            break;
+                        case GameType.FarbsoloTout:
+                            gameOverTitle += "das Solo-Tout";
+                            break;
+                        default:
+                            gameOverTitle += "das Spiel";
+                            break;
+                    }
+
+                    if (leaderPoints >= 120)
+                    {
+                        gameOverTitle += " gewonnen";
+                    }
+                    else
+                    {
+                        gameOverTitle += " verloren";
                     }
                 }
                 else
@@ -613,7 +658,7 @@ namespace Schafkopf.Models
         public async Task SendAskForGameColor(SchafkopfHub hub)
         {
             // Leader has to choose a color he wants to play with or a color to escort his solo
-            if (GameState.AnnouncedGame == GameType.Sauspiel || GameState.AnnouncedGame == GameType.Farbsolo)
+            if (GameState.AnnouncedGame == GameType.Sauspiel || GameState.AnnouncedGame == GameType.Farbsolo || GameState.AnnouncedGame == GameType.FarbsoloTout)
             {
                 foreach (String connectionId in GameState.Leader.GetConnectionIdsWithSpectators())
                 {

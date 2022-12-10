@@ -566,6 +566,33 @@ document
   });
 
 document
+  .getElementById("announceGeierToutButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "Geier-Tout").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
+  .getElementById("announceWenzToutButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "Wenz-Tout").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
+  .getElementById("announceSoloToutButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "Solo-Tout").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
   .getElementById("eichelButton")
   .addEventListener("click", function (event) {
     connection.invoke("AnnounceGameColor", "Eichel").catch(function (err) {

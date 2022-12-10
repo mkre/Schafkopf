@@ -439,6 +439,12 @@ namespace Schafkopf.Models
                         return "Ich spiel' an Geier";
                     case GameType.Sauspiel:
                         return "Ich hab ein Sauspiel";
+                    case GameType.GeierTout:
+                        return "Ich spiele einen Geier-Tout!";
+                    case GameType.WenzTout:
+                        return "Ich spiele einen Wenz-Tout!";
+                    case GameType.FarbsoloTout:
+                        return "Ich hab ein Solo-Tout!";
                 }
             }
             else if (game.GameState.CurrentGameState == State.AnnounceGameType || (game.GameState.CurrentGameState == State.Announce && _WantToPlayAnswered))

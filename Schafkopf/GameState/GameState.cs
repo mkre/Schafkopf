@@ -437,7 +437,12 @@ namespace Schafkopf.Logic
                     //winner.AddPoints(-120);
                 }
 
-                // ToDo: Add Tout-Logic
+                // Special case for Tout-Games
+                if ( ( _AnnouncedGame == GameType.GeierTout || _AnnouncedGame == GameType.WenzTout || _AnnouncedGame == GameType.FarbsoloTout) && winner != Leader)
+                {
+                    // Game Over
+                    _TrickCount = _initial_number_of_cards_per_player;
+                }
             }
         }
 
@@ -485,8 +490,8 @@ namespace Schafkopf.Logic
                             _Groups[i] = 0;
                         }
                     }
-                    // Wenz, Farbsolo, WenzTout, FarbsoloTout
-                    else if ((int)_AnnouncedGame >= 3)
+                    // Announcing player against the others
+                    else
                     {
                         if (PlayingPlayers[i] == Leader)
                         {

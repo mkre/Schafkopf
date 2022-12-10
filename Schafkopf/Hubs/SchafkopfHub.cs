@@ -160,6 +160,15 @@ namespace Schafkopf.Hubs
                 case "Solo":
                     gameType = GameType.Farbsolo;
                     break;
+                case "Geier-Tout":
+                    gameType = GameType.GeierTout;
+                    break;
+                case "Wenz-Tout":
+                    gameType = GameType.WenzTout;
+                    break;
+                case "Solo-Tout":
+                    gameType = GameType.FarbsoloTout;
+                    break;
             }
             Player player = (Player)Context.Items["player"];
             if (player == game.GameState.PlayingPlayers[game.GameState.ActionPlayer])
@@ -168,7 +177,7 @@ namespace Schafkopf.Hubs
                 {
                     foreach (String connectionId in player.GetConnectionIds())
                     {
-                        await Clients.Client(connectionId).SendAsync("ReceiveError", "Du bist gesperrt!");
+                        await Clients.Client(connectionId).SendAsync("ReceiveError", "Du darfst kein Sauspiel ansagen!");
                     }
                     return;
                 }
