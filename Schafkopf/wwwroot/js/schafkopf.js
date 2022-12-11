@@ -3,14 +3,18 @@
 const modalState = {};
 modalState["#reconnectModal"] = false;
 
-var stylesheet;
-var cardOnTableCSSItemStyle;
+const stylesheet = document.styleSheets[1];
+const cardOnTableCSSItemStyle = [...stylesheet.cssRules].find((r) => r.selectorText === ".card-on-table").style;
 // Variables to store z-indices (-> CSS) of cards on table
 var zIndexCardsCurrentTrick = [-5, -5, -5, -5];
 var zIndexCardsLastTrick = [-5, -5, -5, -5];
 
 try {
   setTheme(localStorage.getItem("theme"));
+} catch { }
+
+try {
+  setCardsOnTableTheme(localStorage.getItem("cardsOnTableTheme"), true);
 } catch { }
 
 let connection;
@@ -87,20 +91,50 @@ function connect() {
 
 function setTheme(theme) {
   localStorage.setItem("theme", theme);
-  var button = document.getElementById("toggleThemeButton");
+  // var button = document.getElementById("toggleThemeButton");
   var body = document.getElementsByTagName("body")[0];
   if (theme == "Dark") {
-    button.textContent = "Light";
+    // button.textContent = "Light";
     body.classList.add("bg-dark");
     body.classList.add("text-white");
     body.classList.remove("bg-white");
     body.classList.remove("text-dark");
   } else {
-    button.textContent = "Dark";
+    // button.textContent = "Dark";
     body.classList.add("bg-white");
     body.classList.add("text-dark");
     body.classList.remove("bg-dark");
     body.classList.remove("text-white");
+  }
+}
+
+function setCardsOnTableTheme(theme, forceSetting) {
+  var currentTheme = "none";
+  try {
+    currentTheme = localStorage.getItem("cardsOnTableTheme");
+  } catch { }
+
+  if ((theme != currentTheme) || forceSetting) {
+    localStorage.setItem("cardsOnTableTheme", theme);
+    if (theme == "2dStraight") {
+      cardOnTableCSSItemStyle.setProperty('--rotateCardBottom', '0deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardBottom', '27.5%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardLeft', '90deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardLeft', '27.5%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardTop', '180deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardTop', '27.5%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardRight', '270deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardRight', '27.5%');
+    } else {
+      cardOnTableCSSItemStyle.setProperty('--rotateCardBottom', getRandomInt(-15, 15) + 'deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardBottom', getRandomInt(15, 225) / 10 + '%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardLeft', getRandomInt(75, 105) + 'deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardLeft', getRandomInt(15, 225) / 10 + '%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardTop', getRandomInt(165, 195) + 'deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardTop', getRandomInt(15, 225) / 10 + '%');
+      cardOnTableCSSItemStyle.setProperty('--rotateCardRight', getRandomInt(255, 285) + 'deg');
+      cardOnTableCSSItemStyle.setProperty('--translateCardRight', getRandomInt(15, 225) / 10 + '%');
+    }
   }
 }
 
@@ -127,8 +161,6 @@ function setZIndexOfCardsOnTable(z_bottom, z_left, z_top, z_right) {
 }
 
 function init() {
-  stylesheet = document.styleSheets[1];
-  cardOnTableCSSItemStyle = [...stylesheet.cssRules].find((r) => r.selectorText === ".card-on-table").style;
 
   connection.onclose(() => {
     document.getElementById("game-info").textContent = "";
@@ -408,14 +440,16 @@ function init() {
         content.textContent = "";
         btn.classList.add("d-none");
         // Random rotation and translation for next trick
-        cardOnTableCSSItemStyle.setProperty('--rotateCardBottom',getRandomInt(-15,15) + 'deg');
-        cardOnTableCSSItemStyle.setProperty('--translateCardBottom',getRandomInt(15,225)/10 + '%');
-        cardOnTableCSSItemStyle.setProperty('--rotateCardLeft',getRandomInt(75,105) + 'deg');
-        cardOnTableCSSItemStyle.setProperty('--translateCardLeft',getRandomInt(15,225)/10 + '%');
-        cardOnTableCSSItemStyle.setProperty('--rotateCardTop',getRandomInt(165,195) + 'deg');
-        cardOnTableCSSItemStyle.setProperty('--translateCardTop',getRandomInt(15,225)/10 + '%');
-        cardOnTableCSSItemStyle.setProperty('--rotateCardRight',getRandomInt(255,285) + 'deg');
-        cardOnTableCSSItemStyle.setProperty('--translateCardRight',getRandomInt(15,225)/10 + '%');
+        if (localStorage.getItem("cardsOnTableTheme") == "2dRealistic") {
+          cardOnTableCSSItemStyle.setProperty('--rotateCardBottom', getRandomInt(-15, 15) + 'deg');
+          cardOnTableCSSItemStyle.setProperty('--translateCardBottom', getRandomInt(15, 225) / 10 + '%');
+          cardOnTableCSSItemStyle.setProperty('--rotateCardLeft', getRandomInt(75, 105) + 'deg');
+          cardOnTableCSSItemStyle.setProperty('--translateCardLeft', getRandomInt(15, 225) / 10 + '%');
+          cardOnTableCSSItemStyle.setProperty('--rotateCardTop', getRandomInt(165, 195) + 'deg');
+          cardOnTableCSSItemStyle.setProperty('--translateCardTop', getRandomInt(15, 225) / 10 + '%');
+          cardOnTableCSSItemStyle.setProperty('--rotateCardRight', getRandomInt(255, 285) + 'deg');
+          cardOnTableCSSItemStyle.setProperty('--translateCardRight', getRandomInt(15, 225) / 10 + '%');
+        }
         break;
       case "won":
         content.textContent = "Stich nehmen!";
@@ -775,10 +809,53 @@ document
   });
 
 document
-  .getElementById("toggleThemeButton")
+  .getElementById("toggleUserSettingsButton")
   .addEventListener("click", function (event) {
-    var button = document.getElementById("toggleThemeButton");
-    setTheme(button.textContent.trim());
+    // Update Radio Buttons
+    if (localStorage.getItem("theme") == "Dark") {
+      document.getElementById("themeOptionLight").checked = false;
+      document.getElementById("themeOptionDark").checked = true;
+    } else {
+      document.getElementById("themeOptionDark").checked = false;
+      document.getElementById("themeOptionLight").checked = true;
+    }
+    if (localStorage.getItem("cardsOnTableTheme") == "2dStraight") {
+      document.getElementById("cardsOnTableOption2dRealistic").checked = false;
+      document.getElementById("cardsOnTableOptionStraight").checked = true;
+    } else {
+      document.getElementById("cardsOnTableOptionStraight").checked = false;
+      document.getElementById("cardsOnTableOption2dRealistic").checked = true;
+    }
+
+    showModal('#userSettingsModal');
+    event.preventDefault();
+  });
+
+document
+  .getElementById("userSettingsSubmitButton")
+  .addEventListener("click", function (event) {
+    hideModal('#userSettingsModal');
+    if (document.getElementById("themeOptionDark").checked) {
+      setTheme("Dark");
+    } else {
+      setTheme("Light");
+    }
+    if (document.getElementById("cardsOnTableOptionStraight").checked) {
+      setCardsOnTableTheme("2dStraight", false);
+    } else {
+      setCardsOnTableTheme("2dRealistic", false);
+    }
+    // let searchParams = new URLSearchParams(window.location.search);
+    // // TODO: Automatically set an unused gameID (number) instead of using the input field
+    // searchParams.set("game", document.getElementById("gameIdInput").value)
+    // window.location.search = searchParams.toString();
+
+    // localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
+    // localStorage.setItem("bettelEnabled", document.getElementById("bettelEnabledCheck").checked);
+    // localStorage.setItem("hochzeitEnabled", document.getElementById("hochzeitEnabledCheck").checked);
+    // localStorage.setItem("klopfenEnabled", document.getElementById("klopfenEnabledCheck").checked);
+    // TODO: Invoke a CreateGame task here instead of storing these to localStorage and processing in AddPlayer
+    // tryReconnect();
     event.preventDefault();
   });
 

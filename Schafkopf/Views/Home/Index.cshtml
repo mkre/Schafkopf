@@ -258,6 +258,61 @@
   </div>
 </div>
 
+<div class="modal fade text-dark" id="userSettingsModal" tabindex="-1" role="dialog" >
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Spielereinstellungen</h5>
+      </div>
+      <div class="modal-body">
+        Motiv:
+        <br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="themeOptions" id="themeOptionLight" checked>
+          <label class="form-check-label" for="themeOptionLight">Hell</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="themeOptions" id="themeOptionDark">
+          <label class="form-check-label" for="themeOptionDark">Dunkel</label>
+        </div>
+        <hr>
+        Kartenlegen:
+        <br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="cardsOnTableOptions" id="cardsOnTableOptionStraight" checked>
+          <label class="form-check-label" for="cardsOnTableOptionStraight">2D-Gerade</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="cardsOnTableOptions" id="cardsOnTableOption2dRealistic">
+          <label class="form-check-label" for="cardsOnTableOption2dRealistic">2D-Realistisch</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="cardsOnTableOptions" id="cardsOnTableOption3d" disabled>
+          <label class="form-check-label" for="cardsOnTableOption3d">3D</label>
+        </div>
+        <hr>
+        Eigene Karten (Hand):
+        <br>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="handOptions" id="handOptionStraight" checked disabled>
+          <label class="form-check-label" for="handOptionStraight">Reihe</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="handOptions" id="handOption2dFan" disabled>
+          <label class="form-check-label" for="handOption2dFan">2D-Fächer</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="radio" name="handOptions" id="handOption3dFan" disabled>
+          <label class="form-check-label" for="handOption3dFan">3D</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <input type="submit" class="btn btn-primary" id="userSettingsSubmitButton" value="OK"/>
+        </div>
+    </div>
+  </div>
+</div>
+
 <div class="modal fade text-dark" id="errorModal" tabindex="-1" role="dialog" >
   <div class="modal-dialog" role="document">
     <div class="modal-content">
