@@ -43,14 +43,11 @@ function hideModal(modal) {
 }
 
 function tryReconnect() {
-  // The following code allows a user to reconnect after reloading the page or restarting the browser
-  // During development this is not useful as it is more difficult to simulate multiple users from one machine
-  // append `?session=new` to the url to force a new connection
-  let searchParams = new URLSearchParams(window.location.search);
   var userId = localStorage.getItem("userId");
-  if (userId && !(searchParams.get("session") == "new")) {
+  var gameId = localStorage.getItem("gameId");
+  if (userId && gameId) {
     connection
-      .invoke("ReconnectPlayer", userId, searchParams.get("game"))
+      .invoke("ReconnectPlayer", userId, gameId)
       .catch(function (err) {
         return console.error(err.toString());
       });
@@ -73,8 +70,7 @@ function connect() {
       init();
       hideModal("#reconnectModal");
       document.getElementById("sendButton").disabled = false;
-      let searchParams = new URLSearchParams(window.location.search);
-      if (!searchParams.get("game")) {
+      if (!localStorage.getItem("gameId")) {
         showModal('#gameIdModal');
         $('#gameIdModal').on('shown.bs.modal', function () {
           $('#gameIdInput').focus();
@@ -666,19 +662,14 @@ document
   .getElementById("startButton")
   .addEventListener("click", function (event) {
     event.preventDefault();
-    let searchParams = new URLSearchParams(window.location.search);
     var userName = document.getElementById("startModalUserName").value;
     if (userName === "") {
       return;
     }
-    const isShortHand = localStorage.getItem("isShortHand") === 'true';
-    const isBettelEnabled = localStorage.getItem("bettelEnabled") === 'true';
-    const isHochzeitEnabled = localStorage.getItem("hochzeitEnabled") === 'true';
-    const isKlopfenEnabled = localStorage.getItem("klopfenEnabled") === 'true';
 
     document.getElementById("startModalUserName").value = "";
     connection
-      .invoke("AddPlayer", userName, searchParams.get("game"), isShortHand, isBettelEnabled, isHochzeitEnabled, isKlopfenEnabled)
+      .invoke("AddPlayer", userName, localStorage.getItem("gameId"))
       .catch(function (err) {
         return console.error(err.toString());
       });
@@ -757,18 +748,46 @@ document
 document
   .getElementById("gameIdSubmitButton")
   .addEventListener("click", function (event) {
-    hideModal('#gameIdModal');
-    let searchParams = new URLSearchParams(window.location.search);
-    // TODO: Automatically set an unused gameID (number) instead of using the input field
-    searchParams.set("game", document.getElementById("gameIdInput").value)
-    window.location.search = searchParams.toString();
+    if (document.getElementById("newTableCheck").checked == true) {
+      connection.invoke("GameExists", document.getElementById("gameIdInput").value)
+       .then((result) =>  {
+        if (result == true) {
+          document.getElementById("errorModalBody").textContent = "Tisch existiert bereits!";
+          $("#errorModal").modal();
+          return;
+        } else {
+          hideModal('#gameIdModal');
+          connection.invoke("CreateGame",
+                            document.getElementById("gameIdInput").value,
+                            document.getElementById("kurzesBlattRadio").checked,
+                            document.getElementById("bettelEnabledCheck").checked,
+                            document.getElementById("hochzeitEnabledCheck").checked,
+                            document.getElementById("klopfenEnabledCheck").checked)
+                    .catch(function (err) {
+                      return console.error(err.toString());
+          });
+          localStorage.setItem("gameId", document.getElementById("gameIdInput").value);
+          tryReconnect();
 
-    localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
-    localStorage.setItem("bettelEnabled", document.getElementById("bettelEnabledCheck").checked);
-    localStorage.setItem("hochzeitEnabled", document.getElementById("hochzeitEnabledCheck").checked);
-    localStorage.setItem("klopfenEnabled", document.getElementById("klopfenEnabledCheck").checked);
-    // TODO: Invoke a CreateGame task here instead of storing these to localStorage and processing in AddPlayer
-    tryReconnect();
+       }})
+       .catch(function (err) {
+        return console.error(err.toString());
+      });
+      
+    } else {
+      connection.invoke("GameExists", document.getElementById("gameIdInput").value)
+       .then((result) =>  {
+        if (result == false) {
+          document.getElementById("errorModalBody").textContent = "Tisch existiert nicht!";
+          $("#errorModal").modal();
+          return;
+        } else {
+          hideModal('#gameIdModal');
+          localStorage.setItem("gameId", document.getElementById("gameIdInput").value);
+          tryReconnect();
+        }
+      });
+    }
     event.preventDefault();
   });
 
@@ -845,17 +864,6 @@ document
     } else {
       setCardsOnTableTheme("2dRealistic", false);
     }
-    // let searchParams = new URLSearchParams(window.location.search);
-    // // TODO: Automatically set an unused gameID (number) instead of using the input field
-    // searchParams.set("game", document.getElementById("gameIdInput").value)
-    // window.location.search = searchParams.toString();
-
-    // localStorage.setItem("isShortHand", document.getElementById("kurzesBlattRadio").checked);
-    // localStorage.setItem("bettelEnabled", document.getElementById("bettelEnabledCheck").checked);
-    // localStorage.setItem("hochzeitEnabled", document.getElementById("hochzeitEnabledCheck").checked);
-    // localStorage.setItem("klopfenEnabled", document.getElementById("klopfenEnabledCheck").checked);
-    // TODO: Invoke a CreateGame task here instead of storing these to localStorage and processing in AddPlayer
-    // tryReconnect();
     event.preventDefault();
   });
 

@@ -305,7 +305,33 @@ namespace Schafkopf.Hubs
                 }
             }
         }
-        public async Task AddPlayer(string userName, string gameId, bool isShortHand, bool withBettel, bool withHochzeit, bool withKlopfen)
+
+        public async Task CreateGame(string gameId, bool isShortHand, bool withBettel, bool withHochzeit, bool withKlopfen)
+        {
+            Game game;
+            if (Games.Keys.Contains(gameId))
+            {
+                await Clients.Caller.SendAsync("ReceiveError", "Tisch existiert bereits!");
+                return;
+            }
+            else
+            {
+                GameRules rules = new GameRules();
+                rules.isShortHand = isShortHand;
+                rules.isBettelEnabled = withBettel;
+                rules.isHochzeitEnabled = withHochzeit;
+                rules.isKlopfenEnabled = withKlopfen;
+                game = new Game(rules);
+                Games[gameId] = game;
+            }
+        }
+
+        public bool GameExists(string gameId)
+        {
+            return Games.Keys.Contains(gameId);
+        }
+
+        public async Task AddPlayer(string userName, string gameId)
         {
             Game game;
             Player player;
@@ -348,13 +374,8 @@ namespace Schafkopf.Hubs
             }
             else
             {
-                GameRules rules = new GameRules();
-                rules.isShortHand = isShortHand;
-                rules.isBettelEnabled = withBettel;
-                rules.isHochzeitEnabled = withHochzeit;
-                rules.isKlopfenEnabled = withKlopfen;
-                game = new Game(rules);
-                Games[gameId] = game;
+                await Clients.Caller.SendAsync("ReceiveError", "Der Tisch existiert nicht!");
+                return;
             }
             if (game.GameState.Players.Where(p => p.Name == userName).ToList().Count > 0)
             {
