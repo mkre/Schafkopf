@@ -230,10 +230,12 @@ namespace Schafkopf.Models
             // First Card in trick
             if (game.GameState.Trick.FirstCard == null)
             {
-                // GameType is Sauspiel, Player has Searched Sau and can't run away (yet) 
+                // GameType is Sauspiel, Player has Searched Sau and can't run away (yet), and it is not the last Trick of the current Game
                 if (game.GameState.AnnouncedGame == GameType.Sauspiel &&
                     HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
-                    !IsRunaway)
+                    !IsRunaway &&
+                    this.HandCards.Count() != 1
+                    )
                 {
                     // Davonlaufen / run away: Player has even or more than 3 cards of announced color
                     if (HandColorCount(game.GameState.Leader.AnnouncedColor, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) >= 4)
