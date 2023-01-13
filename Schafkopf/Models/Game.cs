@@ -169,6 +169,9 @@ namespace Schafkopf.Models
             {
                 await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
             }
+            GameState.AllowedToAnnounceContraPlayers.Clear();
+            GameState.AddPlayerToAllowedToAnnounceContraPlayers(GameState.Group0);
+            await SendUpdateContraButton(hub, GetPlayingPlayersConnectionIds());
         }
 
         public async Task SendPlayerIsPlayingGameTypeAndColor(SchafkopfHub hub, List<String> connectionIds)
@@ -236,6 +239,28 @@ namespace Schafkopf.Models
             }
         }
 
+        ///<summary>Method <c>SendUpdateContraButton</c> updated the ContraReSup Button (show/hide) at every player</summary>
+        public async Task SendUpdateContraButton(SchafkopfHub hub, List<String> connectionIds)
+        {
+            String newButtonText = ((ContraState)((int)GameState.CurrentContraState + 1)).ToString() + "!";
+            foreach (String connectionId in connectionIds)
+            {
+                if (GetAllowedToAnnounceContraPlayersConnectionIds().Contains(connectionId))
+                {
+                    await hub.Clients.Client(connectionId).SendAsync(
+                        "ShowContraReSupButton",
+                        newButtonText
+                    );
+                }
+                else
+                {
+                    await hub.Clients.Client(connectionId).SendAsync(
+                        "HideContraReSupButton"
+                    );
+                }
+            }
+        }
+        
         public async Task ClearGameInfo(SchafkopfHub hub, List<String> connectionIds)
         {
             foreach (String connectionId in connectionIds)
@@ -292,6 +317,13 @@ namespace Schafkopf.Models
             }
             await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
             GameState.AddCardToTrick(playedCard, player);
+
+            //If card #GameState.Rules.contraMustBeSaidBeforeTrickCard is played in trick #0/1, no one is allowed to announce Contra/Re/Sup anymore
+            if (GameState.TrickCount == 0 && GameState.Trick.Count == GameState.Rules.contraMustBeSaidBeforeTrickCard) {
+                GameState.AllowedToAnnounceContraPlayers.Clear();
+                await SendUpdateContraButton(hub, GetPlayingPlayersConnectionIds());
+            }
+
             await GameState.Trick.SendTrick(hub, this, GetPlayingPlayersConnectionIds());
             if (GameState.LastTrick != null)
             {
@@ -507,6 +539,11 @@ namespace Schafkopf.Models
             return GameState.PlayingPlayers.Aggregate(new List<String>(), (acc, x) => acc.Concat(x.GetConnectionIdsWithSpectators()).ToList());
         }
 
+        public List<String> GetAllowedToAnnounceContraPlayersConnectionIds()
+        {
+            return GameState.AllowedToAnnounceContraPlayers.Aggregate(new List<String>(), (acc, x) => acc.Concat(x.GetConnectionIdsWithSpectators()).ToList());
+        }
+
         public List<String> GetNonPlayingPlayersConnectionIds()
         {
             return GameState.Players
@@ -715,6 +752,7 @@ $@"
                 }
                 await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
                 await SendTakeTrickButton(hub, connectionIds);
+                await SendUpdateContraButton(hub, connectionIds);
             }
             else if (GameState.CurrentGameState == State.Knock)
             {

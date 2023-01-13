@@ -6,5 +6,6 @@ namespace Schafkopf.Logic
         public bool isBettelEnabled = true;
         public bool isShortHand = true;
         public bool isKlopfenEnabled = true;
+        public int contraMustBeSaidBeforeTrickCard = 2;
    }
 }

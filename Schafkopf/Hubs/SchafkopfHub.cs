@@ -234,6 +234,48 @@ namespace Schafkopf.Hubs
             }
         }
 
+        ///<summary>Method <c>AnnounceContraReSup</c> is called when any player presses the Contra/Re/Sup button</summary>
+        public async Task AnnounceContraReSup()
+        {
+            Game game = ((Game)Context.Items["game"]);
+            Player player = (Player)Context.Items["player"];
+
+            //It's only allowed to announce Contra/Re/Sup/... if several prerequisites are fulfilled
+            if (game.GameState.CurrentGameState == State.Playing && game.GameState.AllowedToAnnounceContraPlayers.Contains(player) && game.GameState.TrickCount == 0 && game.GameState.Trick.Count < game.GameState.Rules.contraMustBeSaidBeforeTrickCard && game.GameState.AllowedToAnnounceContraPlayers.Contains(player) && game.GameState.CurrentContraState < Enum.GetValues(typeof(ContraState)).Cast<ContraState>().Max())
+            {
+                ++game.GameState.CurrentContraState;
+                game.GameState.CurrentContraAnnouncer = player;
+                
+                //Special case Ramsch: No teams, every player can announce only once
+                if (game.GameState.AnnouncedGame == GameType.Ramsch)
+                {
+                    game.GameState.RemovePlayerFromAllowedToAnnounceContraPlayers(player);
+                }
+                else
+                {
+                    game.GameState.AllowedToAnnounceContraPlayers.Clear();
+                    if (game.GameState.Group0.Contains(player)) 
+                    {
+                        game.GameState.AddPlayerToAllowedToAnnounceContraPlayers(game.GameState.Group1);
+                    }
+                    else
+                    {
+                        game.GameState.AddPlayerToAllowedToAnnounceContraPlayers(game.GameState.Group0);
+                    }
+                }
+
+                foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
+                {
+                    await Clients.Client(connectionId).SendAsync(
+                        "ReceiveGameInfo",
+                        $"{game.GameState.CurrentContraAnnouncer.Name.ToString()} sagt ein {game.GameState.CurrentContraState}"
+                    );
+
+                }
+                await game.SendUpdateContraButton(this, game.GetPlayingPlayersConnectionIds());                
+            }
+        }
+
         public async Task PlayCard(String cardId)
         {
             Game game = ((Game)Context.Items["game"]);
@@ -321,6 +363,7 @@ namespace Schafkopf.Hubs
                 rules.isBettelEnabled = withBettel;
                 rules.isHochzeitEnabled = withHochzeit;
                 rules.isKlopfenEnabled = withKlopfen;
+                rules.contraMustBeSaidBeforeTrickCard = 2;
                 game = new Game(rules);
                 Games[gameId] = game;
             }

@@ -7,4 +7,5 @@
     public enum LastTrickButtonState { disabled, show, hide };
     public enum TakeTrickButtonState { hidden, won, lost };
     public enum Playing { Play, Pause, Undecided };
+    public enum ContraState { Null, Kontra, Re, Sup, ReSup, ReReSup, ReReReSup, ReReReReSup };
 }
