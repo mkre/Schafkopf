@@ -14,6 +14,7 @@ namespace Schafkopf.Models
         string Id { get; }
         Color AnnouncedColor { get; }
         int Balance { get; }
+        int TricksWon { get; }
         Playing IsPlaying { get; }
         bool HasBeenAskedToOfferMarriage { get; }
         bool HasAnsweredMarriageOffer { get; }
@@ -40,6 +41,7 @@ namespace Schafkopf.Models
     {
         public List<Card> HandCards = new List<Card>();
         private int _Balance = 0;
+        private int _TricksWon = 0;
         public String _Name = "";
         public String _Id = "";
         private readonly List<String> _connectionIds = new List<String>();
@@ -62,6 +64,7 @@ namespace Schafkopf.Models
         public string Id => _Id;
         public Color AnnouncedColor => _AnnouncedColor;
         public int Balance => _Balance;
+        public int TricksWon => _TricksWon;
         public Playing IsPlaying => _IsPlaying;
         public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
         public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
@@ -86,6 +89,7 @@ namespace Schafkopf.Models
         {
             HandCards = new List<Card>();
             _Balance = 0;
+            _TricksWon = 0;
             _IsPlaying = Playing.Undecided;
             _WantToPlay = false;
             _WantToPlayAnswered = false;
@@ -132,6 +136,7 @@ namespace Schafkopf.Models
         public void AddPoints(int points)
         {
             _Balance += points;
+            _TricksWon += 1;
         }
 
         public void Announce(bool wantToPlay)

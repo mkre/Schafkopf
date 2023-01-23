@@ -581,6 +581,14 @@ namespace Schafkopf.Models
                 for (int j = 0; j < 4; j++)
                 {
                     permutedPlayers[j] = GameState.PlayingPlayers[(j + i) % 4].Name + GameState.PlayingPlayers[(j + i) % 4].GetSpectatorNames();
+                    if (GameState.PlayingPlayers[(j + i) % 4].TricksWon > 0)
+                    {
+                        permutedPlayers[j] += (" | " + GameState.PlayingPlayers[(j + i) % 4].TricksWon + " Stich");
+                        if (GameState.PlayingPlayers[(j + i) % 4].TricksWon != 1)
+                        {
+                            permutedPlayers[j] += "e";
+                        }
+                    }
                     permutedPlayerInfos[j] = GameState.PlayingPlayers[(j + i) % 4].GetCurrentInfo(this);
                 }
                 foreach (String connectionId in GameState.PlayingPlayers[i].GetConnectionIdsWithSpectators())
