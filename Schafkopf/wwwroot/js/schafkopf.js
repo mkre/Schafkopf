@@ -231,6 +231,17 @@ function init() {
   connection.on("ReceiveError", function (message) {
     document.getElementById("errorModalBody").textContent = message;
     $("#errorModal").modal();
+    
+    // If we get an error and have a pre-selected card, unselect it since it's invalid
+    if (preSelectedCard) {
+      const card = document.getElementById(preSelectedCard);
+      if (card) {
+        card.style.border = "";
+        card.style.borderRadius = "";
+        card.style.boxShadow = "";
+      }
+      preSelectedCard = null;
+    }
   });
 
   connection.on("ReceiveInfo", function (message) {
@@ -345,6 +356,9 @@ function init() {
     hideModal('#usernameModal');
   });
 
+  // Track pre-selected card
+  let preSelectedCard = null;
+
   connection.on("ReceiveHand", function (cards) {
     var hand = document.getElementById("hand");
     hand.innerHTML = "";
@@ -353,12 +367,53 @@ function init() {
       card.src = `/carddecks/noto/${cardName}.svg`;
       card.style = "width: 12.5%;";
       card.id = cardName;
+      
+      // Add pre-selection style if this card was pre-selected
+      if (cardName === preSelectedCard) {
+        card.style.border = "3px solid orange";
+        card.style.borderRadius = "5px";
+        card.style.boxShadow = "0 0 5px rgba(255, 165, 0, 0.5)";
+      }
+
       card.addEventListener("click", function (event) {
-        connection
-          .invoke("PlayCard", event.srcElement.id)
-          .catch(function (err) {
-            return console.error(err.toString());
-          });
+        const clickedCard = event.srcElement.id;
+        const isMyTurn = document.getElementById("player-bottom-name").classList.contains("active-player");
+        
+        // If it's not my turn, handle pre-selection
+        if (!isMyTurn) {
+          // Toggle pre-selection
+          if (preSelectedCard === clickedCard) {
+            // Unselect
+            preSelectedCard = null;
+            event.srcElement.style.border = "";
+            event.srcElement.style.borderRadius = "";
+            event.srcElement.style.boxShadow = "";
+          } else {
+            // Clear previous pre-selection if any
+            if (preSelectedCard) {
+              const prevCard = document.getElementById(preSelectedCard);
+              if (prevCard) {
+                prevCard.style.border = "";
+                prevCard.style.borderRadius = "";
+                prevCard.style.boxShadow = "";
+              }
+            }
+            // Set new pre-selection
+            preSelectedCard = clickedCard;
+            event.srcElement.style.border = "3px solid orange";
+            event.srcElement.style.borderRadius = "5px";
+            event.srcElement.style.boxShadow = "0 0 5px rgba(255, 165, 0, 0.5)";
+          }
+        } else {
+          // If it's my turn, play the card
+          connection
+            .invoke("PlayCard", clickedCard)
+            .catch(function (err) {
+              return console.error(err.toString());
+            });
+          // Clear pre-selection after playing
+          preSelectedCard = null;
+        }
         event.preventDefault();
       });
       hand.appendChild(card);
@@ -374,6 +429,20 @@ function init() {
       info.textContent = infos[i]
       if (i == actionPlayer) {
         player.classList.add("active-player");
+        // Auto-play pre-selected card if it's our turn
+        if (i === 0 && preSelectedCard) {
+          connection
+            .invoke("PlayCard", preSelectedCard)
+            .then(() => {
+              // Only clear pre-selection if the play was successful
+              preSelectedCard = null;
+            })
+            .catch(function (err) {
+              // Error is handled by ReceiveError event handler
+              // Do not clear preSelectedCard here as it will be cleared by ReceiveError if needed
+              return console.error(err.toString());
+            });
+        }
       } else {
         player.classList.remove("active-player");
       }
