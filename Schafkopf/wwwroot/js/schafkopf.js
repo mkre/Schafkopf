@@ -70,7 +70,10 @@ function connect() {
       init();
       hideModal("#reconnectModal");
       document.getElementById("sendButton").disabled = false;
-      if (!localStorage.getItem("gameId")) {
+      if (!localStorage.getItem("gameId") || !localStorage.getItem("userId")) {
+        // Clear any existing localStorage data for a fresh start
+        localStorage.removeItem("gameId");
+        localStorage.removeItem("userId");
         showModal('#gameIdModal');
         $('#gameIdModal').on('shown.bs.modal', function () {
           $('#gameIdInput').focus();
@@ -749,6 +752,9 @@ document
   .getElementById("gameIdSubmitButton")
   .addEventListener("click", function (event) {
     if (document.getElementById("newTableCheck").checked == true) {
+      // Clear localStorage before creating a new table
+      localStorage.removeItem("gameId");
+      localStorage.removeItem("userId");
       connection.invoke("GameExists", document.getElementById("gameIdInput").value)
        .then((result) =>  {
         if (result == true) {
