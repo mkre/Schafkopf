@@ -259,6 +259,10 @@ function init() {
   });
 
   connection.on("GameOver", function (title, body) {
+    // Clear any revealed cards when game is over
+    const existingRevealedHands = document.querySelectorAll('.revealed-hand');
+    existingRevealedHands.forEach(hand => hand.remove());
+    
     document.getElementById("gameOverModalTitle").textContent = title;
     document.getElementById("gameOverModalBody").textContent = body;
     showModal('#gameOverModal');
