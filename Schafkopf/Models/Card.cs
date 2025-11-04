@@ -116,7 +116,7 @@ namespace Schafkopf.Models
                     }
                     break;
                 case GameType.Bettel:
-                case GameType.BettelOuvert:
+                case GameType.BettelBrett:
                     {
                         //Determine value
                         if (Number == 2  || Number == 3)

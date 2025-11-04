@@ -169,6 +169,9 @@ namespace Schafkopf.Hubs
                 case "Solo-Tout":
                     gameType = GameType.FarbsoloTout;
                     break;
+                case "BettelBrett":
+                    gameType = GameType.BettelBrett;
+                    break;
             }
             Player player = (Player)Context.Items["player"];
             if (player == game.GameState.PlayingPlayers[game.GameState.ActionPlayer])
@@ -495,6 +498,22 @@ namespace Schafkopf.Hubs
             if (game.GameState.Trick.Count == 4 && game.GameState.Trick.Winner == player)
             {
                 game.GameState.TakeTrick();
+                
+                // For BettelBrett, reveal the leader's cards after the first trick
+                if (game.GameState.AnnouncedGame == GameType.BettelBrett && game.GameState.TrickCount == 1)
+                {
+                    game.GameState.SetBettelBrettCardsRevealed();
+                    // Send the leader's cards to all players
+                    foreach (String connectionId in game.GetPlayingPlayersConnectionIds())
+                    {
+                        await Clients.Client(connectionId).SendAsync(
+                            "RevealPlayerCards",
+                            game.GameState.Leader.Name,
+                            game.GameState.Leader.GetHandCards().Select(c => new { Color = c.Color, Number = c.Number }).ToList()
+                        );
+                    }
+                }
+
                 if (game.GameState.TrickCount == game.GameState.initial_number_of_cards_per_player)
                 {
                     await game.SendEndGameModal(this, game.GetPlayingPlayersConnectionIds());

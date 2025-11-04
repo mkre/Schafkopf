@@ -23,6 +23,16 @@ namespace Schafkopf.Logic
         private TrickState _Trick = null;
         private TrickState _LastTrick = null;
         private int _TrickCount = 0;
+        public bool HasRevealedBettelBrettCards => _HasRevealedBettelBrettCards;
+        private bool _HasRevealedBettelBrettCards = false;
+
+        internal void SetBettelBrettCardsRevealed()
+        {
+            lock (_Lock)
+            {
+                _HasRevealedBettelBrettCards = true;
+            }
+        }
         private readonly object _Lock = new object();
 
         // public access is either read-only or synchronized through _Lock
@@ -125,7 +135,7 @@ namespace Schafkopf.Logic
                 case GameType.Geier:
                 case GameType.GeierTout:
                 case GameType.Bettel:
-                case GameType.BettelOuvert:
+                case GameType.BettelBrett:
                 default:
                     return Color.None;
             }
@@ -222,6 +232,7 @@ namespace Schafkopf.Logic
                 _Trick = null;
                 _LastTrick = null;
                 _TrickCount = 0;
+                _HasRevealedBettelBrettCards = false;
                 _ActionPlayer = -1;
                 _PlayingPlayers = new List<PlayerState>();
 
@@ -430,7 +441,7 @@ namespace Schafkopf.Logic
                 winner.AddPoints(Trick.Points);
                 _TrickCount++;
                 // Special case Bettel: Check if winner of trick is leader / announced the game
-                if ( ( _AnnouncedGame == GameType.Bettel || _AnnouncedGame == GameType.BettelOuvert ) && winner == Leader)
+                if ( ( _AnnouncedGame == GameType.Bettel || _AnnouncedGame == GameType.BettelBrett ) && winner == Leader)
                 {
                     // Game Over
                     _TrickCount = _initial_number_of_cards_per_player;

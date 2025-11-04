@@ -198,6 +198,9 @@ namespace Schafkopf.Models
                 case GameType.Bettel:
                     message = $"{GameState.Leader.Name} spielt einen Bettel";
                     break;
+                case GameType.BettelBrett:
+                    message = $"{GameState.Leader.Name} spielt einen Bettel Brett";
+                    break;
                 case GameType.Farbsolo:
                     message = $"{GameState.Leader.Name} spielt ein {GameState.Leader.AnnouncedColor}-Solo";
                     break;
@@ -308,6 +311,21 @@ namespace Schafkopf.Models
                 GameState.ActionPlayer = GameState.PlayingPlayers.IndexOf(GameState.Trick.Winner);
                 await SendPlayers(hub);
                 await SendTakeTrickButton(hub, GetPlayingPlayersConnectionIds());
+
+                // For BettelBrett, reveal the leader's cards after first trick
+                if (GameState.AnnouncedGame == GameType.BettelBrett && GameState.TrickCount == 1)
+                {
+                    // Send the leader's cards to all players and mark them as revealed
+                    GameState.SetBettelBrettCardsRevealed();
+                    foreach (String connectionId in GetPlayingPlayersConnectionIds())
+                    {
+                        await hub.Clients.Client(connectionId).SendAsync(
+                            "RevealPlayerCards",
+                            GameState.Leader.Name,
+                            GameState.Leader.GetHandCards().Select(c => new { Color = c.Color, Number = c.Number }).ToList()
+                        );
+                    }
+                }
             }
         }
 
@@ -324,16 +342,17 @@ namespace Schafkopf.Models
                 (int leaderPoints, int followerPoints, string leaderNames, string followerNames) = GameState.GetFinalPointsAndTeams();
                 string gameOverTitle = "";
 
-                //Special case: Bettel, Bettel Ouvert
-                if (GameState.AnnouncedGame == GameType.Bettel || GameState.AnnouncedGame == GameType.BettelOuvert)
+                //Special case: Bettel variants
+                if (GameState.AnnouncedGame == GameType.Bettel || GameState.AnnouncedGame == GameType.BettelBrett)
                 {
+                    string gameType = GameState.AnnouncedGame == GameType.BettelBrett ? "Bettel Brett" : "Bettel";
                     if (leaderPoints == 0)
                     {
-                        gameOverTitle = leaderNames + " hat den Bettel gewonnen";
+                        gameOverTitle = $"{leaderNames} hat den {gameType} gewonnen";
                     }
                     else
                     {
-                        gameOverTitle = leaderNames + " hat den Bettel verloren";
+                        gameOverTitle = $"{leaderNames} hat den {gameType} verloren";
                     }
                 }
                 else if (GameState.AnnouncedGame == GameType.GeierTout || GameState.AnnouncedGame == GameType.WenzTout || GameState.AnnouncedGame == GameType.FarbsoloTout)
@@ -705,16 +724,40 @@ $@"
         public async Task SendUpdatedGameState(Player player, SchafkopfHub hub, List<string> connectionIds)
         {
             await SendPlayers(hub);
-            if (GameState.CurrentGameState == State.Playing)
-            {
-                await SendPlayerIsPlayingGameTypeAndColor(hub, connectionIds);
-                await GameState.Trick.SendTrick(hub, this, connectionIds);
-                if (GameState.LastTrick != null)
+                if (GameState.CurrentGameState == State.Playing)
                 {
-                    await SendLastTrickButton(hub, connectionIds, LastTrickButtonState.show);
+                    await SendPlayerIsPlayingGameTypeAndColor(hub, connectionIds);
+                    await GameState.Trick.SendTrick(hub, this, connectionIds);
+                    if (GameState.LastTrick != null)
+                    {
+                        await SendLastTrickButton(hub, connectionIds, LastTrickButtonState.show);
+                    }
+                    await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
+                    await SendTakeTrickButton(hub, connectionIds);
+                
+                    // Resend revealed cards for BettelBrett to reconnecting player if needed
+                    if (GameState.AnnouncedGame == GameType.BettelBrett && GameState.HasRevealedBettelBrettCards && GameState.Leader != null)
+                    {
+                        foreach (string connectionId in player.GetConnectionIds())
+                        {
+                            if (connectionIds.Contains(connectionId))
+                            {
+                                await hub.Clients.Client(connectionId).SendAsync(
+                                    "RevealPlayerCards",
+                                    GameState.Leader.Name, 
+                                    GameState.Leader.GetHandCards().Select(c => new { Color = c.Color, Number = c.Number }).ToList()
+                                );
+                            }
+                        }
+                    }                // Resend revealed cards for BettelBrett if needed
+                if (GameState.AnnouncedGame == GameType.BettelBrett && GameState.HasRevealedBettelBrettCards && GameState.Leader != null)
+                {
+                    await hub.Clients.Clients(connectionIds).SendAsync(
+                        "RevealPlayerCards",
+                        GameState.Leader.Name,
+                        GameState.Leader.GetHandCards().Select(c => new { Color = c.Color, Number = c.Number }).ToList()
+                    );
                 }
-                await player.SendHand(hub, GameState.AnnouncedGame, GameState.GetTrumpColor());
-                await SendTakeTrickButton(hub, connectionIds);
             }
             else if (GameState.CurrentGameState == State.Knock)
             {

@@ -359,6 +359,62 @@ function init() {
   // Track pre-selected card
   let preSelectedCard = null;
 
+  connection.on("RevealPlayerCards", function(playerName, cards) {
+    // Remove any existing revealed cards first
+    const existingRevealedHands = document.querySelectorAll('.revealed-hand');
+    existingRevealedHands.forEach(hand => hand.remove());
+
+    // Try each possible position (top, left, right) to find the player
+    const positions = ['top', 'left', 'right'];
+    for (const pos of positions) {
+      const playerNameDiv = document.getElementById(`player-${pos}-name`);
+      if (playerNameDiv && playerNameDiv.textContent.includes(playerName)) {
+        const hand = document.createElement("div");
+        hand.className = 'revealed-hand';
+        
+        // Different styling based on position
+        if (pos === 'top') {
+          hand.style = "position: absolute; top: 60px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 1000;";
+        } else if (pos === 'left') {
+          hand.style = "position: absolute; left: 60px; top: 50%; transform: translateY(-50%); text-align: center; z-index: 1000;";
+        } else if (pos === 'right') {
+          hand.style = "position: absolute; right: 60px; top: 50%; transform: translateY(-50%); text-align: center; z-index: 1000;";
+        }
+
+        // Create a label
+        const label = document.createElement("div");
+        label.textContent = "Bettel Brett";
+        label.style = "color: orange; font-weight: bold; margin-bottom: 5px;";
+        hand.appendChild(label);
+
+        // Add cards in a vertical arrangement for left/right, horizontal for top
+        const cardsContainer = document.createElement("div");
+        cardsContainer.style = pos === 'top' ? "display: flex; gap: 5px;" : "display: flex; flex-direction: column; gap: 5px;";
+        
+        for (const card of cards) {
+          const cardImg = document.createElement("img");
+          // Convert Color enum (number) to string representation
+          const colorMap = {
+            100: "Schellen",
+            200: "Herz",
+            300: "Gras", 
+            400: "Eichel"
+          };
+          const colorStr = colorMap[card.color];
+          cardImg.src = `/carddecks/noto/${colorStr}-${card.number}.svg`;
+          // Smaller cards for left/right positions
+          cardImg.style = pos === 'top' ? "width: 60px;" : "width: 60px;";
+          cardsContainer.appendChild(cardImg);
+        }
+        hand.appendChild(cardsContainer);
+
+        // Add to the player's container
+        playerNameDiv.parentElement.appendChild(hand);
+        break;
+      }
+    }
+  });
+
   connection.on("ReceiveHand", function (cards) {
     var hand = document.getElementById("hand");
     hand.innerHTML = "";
@@ -653,6 +709,15 @@ document
   .getElementById("announceBettelButton")
   .addEventListener("click", function (event) {
     connection.invoke("AnnounceGameType", "Bettel").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
+  .getElementById("announceBettelBrettButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceGameType", "BettelBrett").catch(function (err) {
       return console.error(err.toString());
     });
     event.preventDefault();

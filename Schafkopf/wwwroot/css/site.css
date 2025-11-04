@@ -73,6 +73,22 @@
   background-color: rgba(255, 80, 0, 0.8);
 }
 
+.revealed-hand {
+  pointer-events: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.revealed-hand img {
+  transition: transform 0.2s ease;
+}
+
+.revealed-hand img:hover {
+  transform: scale(1.2);
+}
+
 #player-right {
   max-width: 30%;
   width: auto;
