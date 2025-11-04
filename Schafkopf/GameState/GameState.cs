@@ -15,6 +15,8 @@ namespace Schafkopf.Logic
         private int _initial_number_of_cards_per_player = 0;
         private State _CurrentGameState = State.Idle;
         private int[] _Groups = new int[] { 0, 0, 0, 0 };
+        private List<Player> _Group0 = new List<Player>();
+        private List<Player> _Group1 = new List<Player>();
         private int _StartPlayer = -1;
         private int _ActionPlayer = -1;
         private GameType _AnnouncedGame = GameType.Ramsch;
@@ -33,6 +35,9 @@ namespace Schafkopf.Logic
                 _HasRevealedBettelBrettCards = true;
             }
         }
+        private ContraState _CurrentContraState = ContraState.Null;
+        private List<Player> _AllowedToAnnounceContraPlayers = new List<Player>();
+        private Player _CurrentContraAnnouncer = null;
         private readonly object _Lock = new object();
 
         // public access is either read-only or synchronized through _Lock
@@ -41,6 +46,7 @@ namespace Schafkopf.Logic
         public Trick LastTrick => _LastTrick;
         public List<Player> Players => _Players.Cast<Player>().ToList();
         public List<Player> PlayingPlayers => _PlayingPlayers.Cast<Player>().ToList();
+        public List<Player> AllowedToAnnounceContraPlayers => _AllowedToAnnounceContraPlayers;
 
         public readonly GameRules Rules;
 
@@ -83,6 +89,31 @@ namespace Schafkopf.Logic
                 }
             }
         }
+
+        public ContraState CurrentContraState
+        {
+            get => _CurrentContraState;
+            set
+            {
+                lock (_Lock)
+                {
+                    _CurrentContraState = value;
+                }
+            }
+        }
+
+        public Player CurrentContraAnnouncer
+        {
+            get => _CurrentContraAnnouncer;
+            set
+            {
+                lock (_Lock)
+                {
+                    _CurrentContraAnnouncer = value;
+                }
+            }
+        }
+
         public Player Leader
         {
             get => _Leader;
@@ -119,6 +150,17 @@ namespace Schafkopf.Logic
                 }
             }
         }
+
+        public List<Player> Group0
+        {
+            get => _Group0;
+        }
+
+        public List<Player> Group1
+        {
+            get => _Group1;
+        }
+
         public Color GetTrumpColor()
         {
             switch (_AnnouncedGame)
@@ -226,6 +268,8 @@ namespace Schafkopf.Logic
             {
                 _CurrentGameState = State.Idle;
                 _Groups = new int[] { 0, 0, 0, 0 };
+                _Group0 = new List<Player>();
+                _Group1 = new List<Player>();
                 _AnnouncedGame = GameType.Ramsch;
                 Leader = null;
                 HusbandWife = null;
@@ -235,6 +279,9 @@ namespace Schafkopf.Logic
                 _HasRevealedBettelBrettCards = false;
                 _ActionPlayer = -1;
                 _PlayingPlayers = new List<PlayerState>();
+                _CurrentContraState = ContraState.Null;
+                _CurrentContraAnnouncer = null;
+                _AllowedToAnnounceContraPlayers = new List<Player>();
 
                 foreach (PlayerState player in _Players)
                 {
@@ -409,6 +456,45 @@ namespace Schafkopf.Logic
             }
         }
 
+        internal void AddPlayerToAllowedToAnnounceContraPlayers (Player player)
+        {
+            lock (_Lock)
+            {
+                _AllowedToAnnounceContraPlayers.Add(player);
+            }
+        }
+
+        internal void AddPlayerToAllowedToAnnounceContraPlayers (List<Player> players)
+        {
+            foreach (Player player in players) {
+                AddPlayerToAllowedToAnnounceContraPlayers(player);
+            }
+        }
+
+        internal bool RemovePlayerFromAllowedToAnnounceContraPlayers (Player player)
+        {
+            lock (_Lock)
+            {
+                if (_AllowedToAnnounceContraPlayers.Contains(player))
+                {
+                    _AllowedToAnnounceContraPlayers.Remove(player);
+                    return true;
+                } else
+                {
+                    return false;
+                }
+            }
+        }
+
+        internal bool RemovePlayerFromAllowedToAnnounceContraPlayers (List<Player> players)
+        {
+            List<bool> results = new List<bool>();
+            foreach(Player player in players) {
+                results.Add(RemovePlayerFromAllowedToAnnounceContraPlayers(player));
+            }
+            return results.All(c=> c==true);
+        }
+
         internal void EnqueueSpectatorForApproval(Player player, Player spectator)
         {
             lock (_Lock)
@@ -462,31 +548,40 @@ namespace Schafkopf.Logic
             lock (_Lock)
             {
                 //Set up the team combination
+                _Group0.Clear();
+                _Group1.Clear();
                 for (int i = 0; i < 4; i++)
                 {
                     if (_AnnouncedGame == GameType.Ramsch)
                     {
                         _Groups[i] = 0;
+                        _Group0.Add(PlayingPlayers[i]);
                     }
                     else if (_AnnouncedGame == GameType.Sauspiel)
                     {
                         if (PlayingPlayers[i] == Leader)
                         {
                             _Groups[i] = 1;
+                            _Group1.Add(PlayingPlayers[i]);
                         }
                         else
                         {
+                            bool foundTheSau = false;
                             foreach (Card c in PlayingPlayers[i].GetHandCards())
                             {
                                 if (c.Number == 11 && c.Color == Leader.AnnouncedColor)
                                 {
                                     _Groups[i] = 1;
+                                    _Group1.Add(PlayingPlayers[i]);
+                                    foundTheSau = true;
                                     break;
                                 }
-                                else
-                                {
-                                    _Groups[i] = 0;
-                                }
+                            }
+
+                            if (!foundTheSau)
+                            {
+                                _Groups[i] = 0;
+                                _Group0.Add(PlayingPlayers[i]);
                             }
                         }
                     }
@@ -495,10 +590,12 @@ namespace Schafkopf.Logic
                         if (PlayingPlayers[i] == Leader || PlayingPlayers[i] == HusbandWife)
                         {
                             _Groups[i] = 1;
+                            _Group1.Add(PlayingPlayers[i]);
                         }
                         else
                         {
                             _Groups[i] = 0;
+                            _Group0.Add(PlayingPlayers[i]);
                         }
                     }
                     // Announcing player against the others
@@ -507,14 +604,41 @@ namespace Schafkopf.Logic
                         if (PlayingPlayers[i] == Leader)
                         {
                             _Groups[i] = 1;
+                            _Group1.Add(PlayingPlayers[i]);
                         }
                         else
                         {
                             _Groups[i] = 0;
+                            _Group0.Add(PlayingPlayers[i]);
                         }
                     }
                 }
             }
+        }
+
+        ///<summary>Method <c>GetPartners</c> returns the partners of Player <c>player</c></summary>
+        public List<Player> GetPartners(Player player) {
+            List<Player> partners = new List<Player>();
+            List<Player> temp = null;
+
+            if (_Group0.Contains(player))
+            {
+                temp = _Group0;    
+            }
+            else if (_Group1.Contains(player))
+            {
+                temp = _Group1;
+            }
+
+            foreach (Player p in temp)
+            {
+                if (p != player)
+                {
+                    partners.Add(p);
+                }
+            }
+
+            return partners;
         }
     }
 }

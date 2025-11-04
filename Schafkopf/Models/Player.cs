@@ -14,6 +14,7 @@ namespace Schafkopf.Models
         string Id { get; }
         Color AnnouncedColor { get; }
         int Balance { get; }
+        int TricksWon { get; }
         Playing IsPlaying { get; }
         bool HasBeenAskedToOfferMarriage { get; }
         bool HasAnsweredMarriageOffer { get; }
@@ -40,6 +41,7 @@ namespace Schafkopf.Models
     {
         public List<Card> HandCards = new List<Card>();
         private int _Balance = 0;
+        private int _TricksWon = 0;
         public String _Name = "";
         public String _Id = "";
         private readonly List<String> _connectionIds = new List<String>();
@@ -62,6 +64,7 @@ namespace Schafkopf.Models
         public string Id => _Id;
         public Color AnnouncedColor => _AnnouncedColor;
         public int Balance => _Balance;
+        public int TricksWon => _TricksWon;
         public Playing IsPlaying => _IsPlaying;
         public bool HasBeenAskedToOfferMarriage => _HasBeenAskedToOfferMarriage;
         public bool HasAnsweredMarriageOffer => _HasAnsweredMarriageOffer;
@@ -86,6 +89,7 @@ namespace Schafkopf.Models
         {
             HandCards = new List<Card>();
             _Balance = 0;
+            _TricksWon = 0;
             _IsPlaying = Playing.Undecided;
             _WantToPlay = false;
             _WantToPlayAnswered = false;
@@ -132,6 +136,7 @@ namespace Schafkopf.Models
         public void AddPoints(int points)
         {
             _Balance += points;
+            _TricksWon += 1;
         }
 
         public void Announce(bool wantToPlay)
@@ -230,10 +235,12 @@ namespace Schafkopf.Models
             // First Card in trick
             if (game.GameState.Trick.FirstCard == null)
             {
-                // GameType is Sauspiel, Player has Searched Sau and can't run away (yet) 
+                // GameType is Sauspiel, Player has Searched Sau and can't run away (yet), and it is not the last Trick of the current Game
                 if (game.GameState.AnnouncedGame == GameType.Sauspiel &&
                     HandContainsSearchedSau(game.GameState.Leader.AnnouncedColor) &&
-                    !IsRunaway)
+                    !IsRunaway &&
+                    this.HandCards.Count() != 1
+                    )
                 {
                     // Davonlaufen / run away: Player has even or more than 3 cards of announced color
                     if (HandColorCount(game.GameState.Leader.AnnouncedColor, game.GameState.AnnouncedGame, game.GameState.GetTrumpColor()) >= 4)

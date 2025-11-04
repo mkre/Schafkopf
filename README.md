@@ -22,6 +22,7 @@ Note, that this is a German game so everything in the game is in German.
 * Hochzeit
 * Ramsch
 * Legen/Klopfen after one has received half of the cards
+* Contra/Re/Sup/... (Default: according to schafkopfschule.de rules, i.e. before 2nd card of trick 1 is played)
 * Chat
 * More than 4 Players (additional players can spectate if not playing)
 

@@ -114,6 +114,16 @@
   z-index: 50;
 }
 
+#contra-re-sup {
+  max-width: fit-content;
+  width: auto;
+  top: auto;
+  bottom: 5px;
+  pointer-events: all;
+  z-index: 100;
+  left: 35%;
+}
+
 #player-top {
   max-width: 30%;
   width: auto;

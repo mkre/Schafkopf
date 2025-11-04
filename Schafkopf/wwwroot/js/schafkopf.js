@@ -309,6 +309,17 @@ function init() {
     showModal('#announceModal');
   });
 
+  connection.on("ShowContraReSupButton", function (buttonText) {
+    const btn = document.getElementById("contraReSupButton");
+    btn.textContent = buttonText;
+    btn.disabled = false;
+    btn.classList.remove("d-none");
+  });
+
+  connection.on("HideContraReSupButton", function () {
+    document.getElementById("contraReSupButton").classList.add("d-none");
+  });
+
   connection.on("AskWantToSpectate", function (players) {
     document.getElementById("wantToSpectatePlayer1Button").textContent = players[0];
     document.getElementById("wantToSpectatePlayer2Button").textContent = players[1];
@@ -664,7 +675,7 @@ document
     event.preventDefault();
   });
 
-  document
+document
   .getElementById("knockNoButton")
   .addEventListener("click", function (event) {
     connection.invoke("Knock", false).catch(function (err) {
@@ -794,6 +805,15 @@ document
   .getElementById("schellenButton")
   .addEventListener("click", function (event) {
     connection.invoke("AnnounceGameColor", "Schellen").catch(function (err) {
+      return console.error(err.toString());
+    });
+    event.preventDefault();
+  });
+
+document
+  .getElementById("contraReSupButton")
+  .addEventListener("click", function (event) {
+    connection.invoke("AnnounceContraReSup").catch(function (err) {
       return console.error(err.toString());
     });
     event.preventDefault();
