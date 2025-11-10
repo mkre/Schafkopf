@@ -433,6 +433,9 @@ function init() {
   connection.on("ReceiveHand", function (cards) {
     var hand = document.getElementById("hand");
     hand.innerHTML = "";
+    // Clear pre-selection when receiving a new hand (new trick)
+    preSelectedCard = null;
+    
     for (const cardName of cards) {
       var card = document.createElement("img");
       card.src = `/carddecks/noto/${cardName}.svg`;
