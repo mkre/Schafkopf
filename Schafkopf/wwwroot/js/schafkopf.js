@@ -545,10 +545,20 @@ function init() {
       setZIndexOfCardsOnTable(zIndexCardBottom, zIndexCardLeft, zIndexCardTop, zIndexCardRight);
       zIndexCardsCurrentTrick = [zIndexCardBottom, zIndexCardLeft, zIndexCardTop, zIndexCardRight];
     }
-    // Store z-indices for "see last trick button"
+    // Store z-indices for "see last trick button" and clear preselection when trick is complete
     else
     {
       zIndexCardsLastTrick = zIndexCardsCurrentTrick;
+      // Clear preselection when all 4 cards have been played
+      if (preSelectedCard) {
+        const prevCard = document.getElementById(preSelectedCard);
+        if (prevCard) {
+          prevCard.style.border = "";
+          prevCard.style.borderRadius = "";
+          prevCard.style.boxShadow = "";
+        }
+        preSelectedCard = null;
+      }
     }
     document.getElementById("card-bottom").src = cards[0] != "" ? `/carddecks/noto/${cards[0]}.svg` : "/carddecks/blank.svg";
     document.getElementById("card-left").src = cards[1] != "" ? `/carddecks/noto/${cards[1]}.svg` : "/carddecks/blank.svg";
