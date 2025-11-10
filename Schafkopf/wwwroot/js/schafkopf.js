@@ -447,7 +447,8 @@ function init() {
       }
 
       card.addEventListener("click", function (event) {
-        const clickedCard = event.srcElement.id;
+        const cardElement = event.currentTarget;
+        const clickedCard = cardElement.id;
         const isMyTurn = document.getElementById("player-bottom-name").classList.contains("active-player");
         
         // If it's not my turn, handle pre-selection
@@ -456,9 +457,9 @@ function init() {
           if (preSelectedCard === clickedCard) {
             // Unselect
             preSelectedCard = null;
-            event.srcElement.style.border = "";
-            event.srcElement.style.borderRadius = "";
-            event.srcElement.style.boxShadow = "";
+            cardElement.style.border = "";
+            cardElement.style.borderRadius = "";
+            cardElement.style.boxShadow = "";
           } else {
             // Clear previous pre-selection if any
             if (preSelectedCard) {
@@ -471,9 +472,9 @@ function init() {
             }
             // Set new pre-selection
             preSelectedCard = clickedCard;
-            event.srcElement.style.border = "3px solid orange";
-            event.srcElement.style.borderRadius = "5px";
-            event.srcElement.style.boxShadow = "0 0 5px rgba(255, 165, 0, 0.5)";
+            cardElement.style.border = "3px solid orange";
+            cardElement.style.borderRadius = "5px";
+            cardElement.style.boxShadow = "0 0 5px rgba(255, 165, 0, 0.5)";
           }
         } else {
           // If it's my turn, play the card
