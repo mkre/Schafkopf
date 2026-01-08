@@ -4,16 +4,16 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Schafkopf.Hubs;
-using Schafkopf.Logic;
+using Schafkopf.GameState;
 
 namespace Schafkopf.Models
 {
     public class Game
     {
-        public GameState GameState;
+        public Schafkopf.GameState.GameState GameState;
 
         public Game(GameRules rules) {
-            GameState = new GameState(rules);
+            GameState = new Schafkopf.GameState.GameState(rules);
         }
 
         public async Task Reset(SchafkopfHub hub)

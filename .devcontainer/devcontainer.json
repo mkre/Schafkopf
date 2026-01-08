@@ -7,5 +7,9 @@
     "forwardPorts": [
         5000,
         5001
-    ]
+    ],
+    "remoteUser": "dotnet",
+    "remoteEnv": {
+        "SHELL": "/bin/bash"
+    }
 }

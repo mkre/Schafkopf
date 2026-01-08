@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
-using Schafkopf.Logic;
+using Schafkopf.GameState;
 
 namespace Schafkopf.Hubs
 {

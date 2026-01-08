@@ -4,7 +4,7 @@ using System.Linq;
 using Schafkopf.Hubs;
 using Schafkopf.Models;
 
-namespace Schafkopf.Logic
+namespace Schafkopf.GameState
 {
     public class GameState
     {

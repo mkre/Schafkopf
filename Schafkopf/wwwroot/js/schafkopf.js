@@ -504,8 +504,8 @@ function init() {
       info.textContent = infos[i]
       if (i == actionPlayer) {
         player.classList.add("active-player");
-        // Auto-play pre-selected card if it's our turn
-        if (i === 0 && preSelectedCard) {
+        // Auto-play pre-selected card if it's our turn and we have one selected
+        if (preSelectedCard) {
           connection
             .invoke("PlayCard", preSelectedCard)
             .then(() => {
