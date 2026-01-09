@@ -179,6 +179,15 @@ Then attach your debugger to the process.
 - Build tasks are configured in `.vscode/tasks.json` if using Visual Studio Code
 - The solution uses .NET 6.0 as the target framework
 
+### Merge Request / Pull Request Requirements for AI-assisted edits
+
+- When an AI-assisted agent prepares a change that will be submitted as a Merge Request (MR) or Pull Request (PR), the MR title must include the tag `#AI-ASSISTED`.
+- The MR/PR description must explicitly state which AI agent was used to prepare the changes (agent name and model/version) and include a short note summarizing the agent's role (e.g., "prepared code changes, tests, and docs with AI assistance").
+- Include a clear list of edited files and any follow-up manual verification steps required.
+- Example MR title: `Add chat TTS + server audio playback, UI & test page — #AI-ASSISTED`
+
+These requirements help reviewers quickly identify AI-assisted contributions and ensure necessary human review.
+
 ## Additional Resources
 
 - [ASP.NET Core Documentation](https://docs.microsoft.com/aspnet/core)
