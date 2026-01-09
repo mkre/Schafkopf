@@ -130,6 +130,13 @@ This is a .NET 6.0 core project. To set up your development environment:
 - If you want to play this on a single computer during development, append `&session=new` to the URL to create a new session instead of reconnecting to an existing one.
 - For troubleshooting setup issues, see [AGENTS.md](AGENTS.md) which contains detailed setup instructions and solutions for common problems.
 
+Using VS Code Tasks
+
+- The workspace contains VS Code tasks defined in `.vscode/tasks.json` with labels: `build`, `publish`, and `watch`.
+- To run a task: open the Command Palette (`Ctrl+Shift+P`) and choose `Tasks: Run Task`, then select `watch` (recommended) or `build`.
+- Use `watch` for development (`dotnet watch run`) to get auto-reload on code changes. For a simple manual start use the exact run command below.
+- Avoid using `publish` for normal local testing — `publish` creates deployable artifacts and is slower.
+
 ### Troubleshooting Port Conflicts
 
 **macOS Users**: If HTTP on port 5000 returns a 403 Forbidden error, it's likely that Apple's **AirTunes (AirPlay) server** is using port 5000.
