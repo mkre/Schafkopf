@@ -3,7 +3,6 @@ This is an Open Source implementation of the bavarian card game **Schafkopf**, f
 
 Build and run it on your own server with docker: `docker build Schafkopf -t schafkopf && docker run -p 80:80 schafkopf`.
 
-````
 
 ## Text-to-Speech (TTS) Architecture
 
@@ -16,9 +15,9 @@ flowchart LR
       SignalRClient["SignalR client (browser)"]
       TTSModule["TTS module\n(window.TTS)\n(speechSynthesis + audio element)"]
       UI -->|send chat| SignalRClient
-      SignalRClient -->|ReceiveChatMessage(user,msg)| UI
-      SignalRClient -->|ReceiveChatMessage(user,msg)| TTSModule
-      SignalRClient -->|ReceivePlayTtsFile(url)| TTSModule
+      SignalRClient -->|ReceiveChatMessage| UI
+      SignalRClient -->|ReceiveChatMessage| TTSModule
+      SignalRClient -->|ReceivePlayTtsFile| TTSModule
       UI -->|play-for-all (button)| SignalRClient
    end
 
