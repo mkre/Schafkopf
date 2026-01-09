@@ -26,7 +26,7 @@ flowchart LR
       GameState["Game state & Players"]
       StaticFiles["/wwwroot/tts/ (static files)"]
       SchafkopfHub -->|broadcast ReceiveChatMessage| SignalRClient
-      SchafkopfHub -->|BroadcastTtsFile(url)| SignalRClient
+      SchafkopfHub -->|BroadcastTtsFile| SignalRClient
       SchafkopfHub --> GameState
       StaticFiles --> SignalRClient
    end
