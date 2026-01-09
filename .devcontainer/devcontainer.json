@@ -5,6 +5,7 @@
         "ms-dotnettools.csharp",
         "shd101wyy.markdown-preview-enhanced"
     ],
+    "postCreateCommand": "sudo apt-get update && sudo apt-get install -y nodejs npm",
     "forwardPorts": [
         5000,
         5001

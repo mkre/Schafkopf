@@ -41,6 +41,18 @@ Test page
 - Open the TTS test page in your running instance to exercise the feature: [TTS Test Page](/Home/TtsTest)
 - Server audio files are served from `/tts/` and listed by the endpoint `/tts/files`.
 
+Testing tip
+- You can test multi-client TTS by opening the app in two different browsers (for example Chrome and Safari) and using an incognito/private window in each to simulate two players at the same table.
+
+Run command
+- To run the app from the workspace root use the exact command:
+
+```bash
+cd /workspaces/Schafkopf/Schafkopf && dotnet run
+```
+
+You can also start the app from a script via npm as described below.
+
 Notes
 - Chat TTS uses the browser's SpeechSynthesis API on each client (privacy-friendly, no server audio generation).
 - "Play for all" sends the selected server audio URL to the server which relays it to all players via `BroadcastTtsFile`.
