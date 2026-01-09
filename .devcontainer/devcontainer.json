@@ -2,7 +2,8 @@
     "name": "Dotnet",
     "dockerFile": "Dockerfile",
     "extensions": [
-        "ms-dotnettools.csharp"
+        "ms-dotnettools.csharp",
+        "shd101wyy.markdown-preview-enhanced"
     ],
     "forwardPorts": [
         5000,

@@ -68,6 +68,11 @@ function connect() {
     .start()
     .then(function () {
       init();
+      try {
+        if (window.TTS && typeof window.TTS.initializeTts === 'function') {
+          window.TTS.initializeTts();
+        }
+      } catch (e) { console.error('TTS init error', e); }
       hideModal("#reconnectModal");
       document.getElementById("sendButton").disabled = false;
       if (!localStorage.getItem("gameId") || !localStorage.getItem("userId")) {
@@ -86,6 +91,21 @@ function connect() {
       showModal("#reconnectModal");
       return console.error(err.toString());
     });
+
+  // Attach play-for-all button handler (uses SignalR to broadcast)
+  document.addEventListener('DOMContentLoaded', function () {
+    const playBtn = document.getElementById('ttsServerPlay');
+    if (playBtn) {
+      playBtn.addEventListener('click', function () {
+        const sel = document.getElementById('ttsServerSelect');
+        if (sel && sel.value) {
+          if (connection && typeof connection.invoke === 'function') {
+            connection.invoke('BroadcastTtsFile', sel.value).catch(function (err) { console.error(err.toString()); });
+          }
+        }
+      });
+    }
+  });
 }
 
 function setTheme(theme) {
@@ -210,6 +230,19 @@ function init() {
     document.getElementById("messagesList").appendChild(div);
     var messageList = document.getElementById("messagesList");
     messageList.scrollTop = messageList.scrollHeight;
+    try {
+      if (window.TTS && typeof window.TTS.handleIncomingChat === 'function') {
+        window.TTS.handleIncomingChat(user, message);
+      }
+    } catch (e) { console.error('TTS speak error', e); }
+  });
+
+  connection.on("ReceivePlayTtsFile", function (url) {
+    try {
+      if (window.TTS && typeof window.TTS.playServerTtsFile === 'function') {
+        window.TTS.playServerTtsFile(url);
+      }
+    } catch (e) { console.error('TTS play error', e); }
   });
 
   connection.on("ReceiveSystemMessage", function (message) {

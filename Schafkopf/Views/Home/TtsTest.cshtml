@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "TTS Test";
+}
+
+<div class="container mt-3">
+  <h2>TTS Test Page</h2>
+  <div class="form-group">
+    <label for="testText">Text to speak</label>
+    <input id="testText" class="form-control" />
+  </div>
+  <div class="form-group">
+    <button id="testSpeak" class="btn btn-primary">Speak</button>
+    <button id="testEnableAudio" class="btn btn-outline-secondary ml-2">Enable Audio</button>
+    <button id="testResetTts" class="btn btn-outline-secondary ml-2">Reset TTS</button>
+  </div>
+
+  <hr />
+  <div class="form-group">
+    <label for="ttsServerSelect">Server audio</label>
+    <div class="input-group">
+      <select id="ttsServerSelect" class="form-control"></select>
+      <div class="input-group-append">
+        <button id="ttsServerPlay" class="btn btn-secondary" type="button">Play</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="~/js/tts.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const speakBtn = document.getElementById('testSpeak');
+    speakBtn.addEventListener('click', function () {
+      const txt = document.getElementById('testText').value;
+      if (window.TTS && typeof window.TTS.speakText === 'function') window.TTS.speakText(txt);
+    });
+    const playBtn = document.getElementById('ttsServerPlay');
+    playBtn.addEventListener('click', function () {
+      const sel = document.getElementById('ttsServerSelect');
+      if (sel && sel.value && window.TTS && typeof window.TTS.playServerTtsFile === 'function') window.TTS.playServerTtsFile(sel.value);
+    });
+    const enableBtn = document.getElementById('testEnableAudio');
+    enableBtn.addEventListener('click', function () {
+      if (window.TTS) {
+        try { if (typeof window.TTS.unlockAudio === 'function') window.TTS.unlockAudio(); } catch(e){}
+        try { window.TTS && window.TTS.resetTts && window.TTS.resetTts(); } catch(e){}
+      }
+    });
+    const resetBtn = document.getElementById('testResetTts');
+    resetBtn.addEventListener('click', function () { if (window.TTS && typeof window.TTS.resetTts === 'function') window.TTS.resetTts(); });
+  });
+</script>

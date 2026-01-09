@@ -3,7 +3,48 @@ This is an Open Source implementation of the bavarian card game **Schafkopf**, f
 
 Build and run it on your own server with docker: `docker build Schafkopf -t schafkopf && docker run -p 80:80 schafkopf`.
 
-When trying out, note that first all 4 players must connect. Use Firefox' Multi-Account Container Extension or similar.
+````
+
+## Text-to-Speech (TTS) Architecture
+
+The application includes a client-side TTS feature (Web Speech API) for reading chat messages and playback of server-hosted audio files. The diagram below shows the main components and message flow.
+
+```mermaid
+flowchart LR
+   subgraph Browser
+      UI["UI: Chat & Controls"]
+      SignalRClient["SignalR client (browser)"]
+      TTSModule["TTS module\n(window.TTS)\n(speechSynthesis + audio element)"]
+      UI -->|send chat| SignalRClient
+      SignalRClient -->|ReceiveChatMessage(user,msg)| UI
+      SignalRClient -->|ReceiveChatMessage(user,msg)| TTSModule
+      SignalRClient -->|ReceivePlayTtsFile(url)| TTSModule
+      UI -->|play-for-all (button)| SignalRClient
+   end
+
+   subgraph Server
+      SchafkopfHub["SchafkopfHub (SignalR)"]
+      GameState["Game state & Players"]
+      StaticFiles["/wwwroot/tts/ (static files)"]
+      SchafkopfHub -->|broadcast ReceiveChatMessage| SignalRClient
+      SchafkopfHub -->|BroadcastTtsFile(url)| SignalRClient
+      SchafkopfHub --> GameState
+      StaticFiles --> SignalRClient
+   end
+
+   classDef server fill:#f8f9fa,stroke:#333,stroke-width:1px;
+   class SchafkopfHub,GameState,StaticFiles server;
+
+```
+
+Test page
+- Open the TTS test page in your running instance to exercise the feature: [TTS Test Page](/Home/TtsTest)
+- Server audio files are served from `/tts/` and listed by the endpoint `/tts/files`.
+
+Notes
+- Chat TTS uses the browser's SpeechSynthesis API on each client (privacy-friendly, no server audio generation).
+- "Play for all" sends the selected server audio URL to the server which relays it to all players via `BroadcastTtsFile`.
+
 
 What can this app offer you:
 * Play Schafkopf with friends in their browser

@@ -40,6 +40,16 @@ namespace Schafkopf.Hubs
             }
         }
 
+        public async Task BroadcastTtsFile(string url)
+        {
+            Game game = ((Game)Context.Items["game"]);
+            if (game == null) return;
+            foreach (String connectionId in game.GetPlayersConnectionIds())
+            {
+                await Clients.Client(connectionId).SendAsync("ReceivePlayTtsFile", url);
+            }
+        }
+
         public async Task Knock(bool wantToKnock)
         {
             Game game = ((Game)Context.Items["game"]);
