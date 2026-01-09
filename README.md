@@ -18,7 +18,7 @@ flowchart LR
       SignalRClient -->|ReceiveChatMessage| UI
       SignalRClient -->|ReceiveChatMessage| TTSModule
       SignalRClient -->|ReceivePlayTtsFile| TTSModule
-      UI -->|play-for-all (button)| SignalRClient
+      UI -->|play-for-all| SignalRClient
    end
 
    subgraph Server
