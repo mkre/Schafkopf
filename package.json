@@ -3,6 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "schafkopf": "cd Schafkopf && dotnet run"
+    "schafkopf": "cd /workspaces/Schafkopf/Schafkopf && dotnet run"
   }
 }
