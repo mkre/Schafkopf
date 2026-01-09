@@ -221,7 +221,7 @@ function init() {
     }
   });
 
-  connection.on("ReceiveChatMessage", function (user, message) {
+  connection.on("ReceiveChatMessage", function (user, message, voice) {
     var div = document.createElement("div");
     var userB = div.appendChild(document.createElement("b"));
     var msgSpan = div.appendChild(document.createElement("span"));
@@ -232,7 +232,7 @@ function init() {
     messageList.scrollTop = messageList.scrollHeight;
     try {
       if (window.TTS && typeof window.TTS.handleIncomingChat === 'function') {
-        window.TTS.handleIncomingChat(user, message);
+        window.TTS.handleIncomingChat(user, message, voice);
       }
     } catch (e) { console.error('TTS speak error', e); }
   });
@@ -677,10 +677,12 @@ document
   .addEventListener("click", function (event) {
     event.preventDefault();
     var message = document.getElementById("messageInput").value;
+    var voiceSel = document.getElementById('ttsVoiceSelect');
+    var selectedVoice = voiceSel ? voiceSel.value : '';
     if (message.trim() === "") {
       return;
     }
-    connection.invoke("SendChatMessage", message).catch(function (err) {
+    connection.invoke("SendChatMessage", message, selectedVoice).catch(function (err) {
       return console.error(err.toString());
     });
     document.getElementById("messageInput").value = "";

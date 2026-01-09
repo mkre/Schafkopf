@@ -186,7 +186,7 @@
     } catch (e) { console.error('toast error', e); }
   }
 
-  function handleIncomingChat(user, message) {
+  function handleIncomingChat(user, message, senderVoiceName) {
     try {
       const enabled = (localStorage.getItem(LS_KEYS.enabled) === null) ? true : (localStorage.getItem(LS_KEYS.enabled) === 'true');
       const checkbox = document.getElementById('ttsEnabled');
@@ -194,7 +194,34 @@
       if (!enabled) return;
       const text = `${user}: ${message}`;
       try {
-        speakText(text);
+        // Attempt to use the sender's chosen voice first.
+        let utter = new SpeechSynthesisUtterance(sanitizeText(text));
+        const vol = parseFloat(localStorage.getItem(LS_KEYS.volume) || '1');
+        utter.volume = isNaN(vol) ? 1 : vol;
+        const rate = parseFloat(localStorage.getItem(LS_KEYS.rate) || '1');
+        utter.rate = isNaN(rate) ? 1 : rate;
+        const pitch = parseFloat(localStorage.getItem(LS_KEYS.pitch) || '1');
+        utter.pitch = isNaN(pitch) ? 1 : pitch;
+
+        // Ensure voices are loaded
+        if (!voices || voices.length === 0) loadVoices();
+
+        let chosenVoice = null;
+        if (senderVoiceName) {
+          chosenVoice = voices.find(v => v.name === senderVoiceName);
+        }
+        // Fallback 1: the receiver's selected voice (local preference)
+        if (!chosenVoice) {
+          const sel = document.getElementById('ttsVoiceSelect');
+          const preferred = (sel && sel.value) ? sel.value : (localStorage.getItem(LS_KEYS.voice) || '');
+          if (preferred) chosenVoice = voices.find(v => v.name === preferred);
+        }
+        // Fallback 2: let browser choose default (do nothing)
+        if (chosenVoice) utter.voice = chosenVoice;
+
+        utter.onend = function () { console.log('TTS: incoming utter end'); };
+        utter.onerror = function (e) { console.error('TTS incoming utterror', e); };
+        speechSynthesis.speak(utter);
       } catch (e) {
         console.error('speak error', e);
       }
