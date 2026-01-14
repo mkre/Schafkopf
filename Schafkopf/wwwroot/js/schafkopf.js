@@ -68,6 +68,11 @@ function connect() {
     .start()
     .then(function () {
       init();
+      try {
+        if (window.TTS && typeof window.TTS.initializeTts === 'function') {
+          window.TTS.initializeTts();
+        }
+      } catch (e) { console.error('TTS init error', e); }
       hideModal("#reconnectModal");
       document.getElementById("sendButton").disabled = false;
       if (!localStorage.getItem("gameId") || !localStorage.getItem("userId")) {
@@ -86,6 +91,21 @@ function connect() {
       showModal("#reconnectModal");
       return console.error(err.toString());
     });
+
+  // Attach play-for-all button handler (uses SignalR to broadcast)
+  document.addEventListener('DOMContentLoaded', function () {
+    const playBtn = document.getElementById('ttsServerPlay');
+    if (playBtn) {
+      playBtn.addEventListener('click', function () {
+        const sel = document.getElementById('ttsServerSelect');
+        if (sel && sel.value) {
+          if (connection && typeof connection.invoke === 'function') {
+            connection.invoke('BroadcastTtsFile', sel.value).catch(function (err) { console.error(err.toString()); });
+          }
+        }
+      });
+    }
+  });
 }
 
 function setTheme(theme) {
@@ -201,7 +221,7 @@ function init() {
     }
   });
 
-  connection.on("ReceiveChatMessage", function (user, message) {
+  connection.on("ReceiveChatMessage", function (user, message, voice) {
     var div = document.createElement("div");
     var userB = div.appendChild(document.createElement("b"));
     var msgSpan = div.appendChild(document.createElement("span"));
@@ -210,6 +230,19 @@ function init() {
     document.getElementById("messagesList").appendChild(div);
     var messageList = document.getElementById("messagesList");
     messageList.scrollTop = messageList.scrollHeight;
+    try {
+      if (window.TTS && typeof window.TTS.handleIncomingChat === 'function') {
+        window.TTS.handleIncomingChat(user, message, voice);
+      }
+    } catch (e) { console.error('TTS speak error', e); }
+  });
+
+  connection.on("ReceivePlayTtsFile", function (url) {
+    try {
+      if (window.TTS && typeof window.TTS.playServerTtsFile === 'function') {
+        window.TTS.playServerTtsFile(url);
+      }
+    } catch (e) { console.error('TTS play error', e); }
   });
 
   connection.on("ReceiveSystemMessage", function (message) {
@@ -504,8 +537,8 @@ function init() {
       info.textContent = infos[i]
       if (i == actionPlayer) {
         player.classList.add("active-player");
-        // Auto-play pre-selected card if it's our turn
-        if (i === 0 && preSelectedCard) {
+        // Auto-play pre-selected card if it's our turn and we have one selected
+        if (preSelectedCard) {
           connection
             .invoke("PlayCard", preSelectedCard)
             .then(() => {
@@ -644,10 +677,12 @@ document
   .addEventListener("click", function (event) {
     event.preventDefault();
     var message = document.getElementById("messageInput").value;
+    var voiceSel = document.getElementById('ttsVoiceSelect');
+    var selectedVoice = voiceSel ? voiceSel.value : '';
     if (message.trim() === "") {
       return;
     }
-    connection.invoke("SendChatMessage", message).catch(function (err) {
+    connection.invoke("SendChatMessage", message, selectedVoice).catch(function (err) {
       return console.error(err.toString());
     });
     document.getElementById("messageInput").value = "";

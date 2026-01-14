@@ -1,4 +1,4 @@
-namespace Schafkopf.Logic
+namespace Schafkopf.GameState
 {
     public class GameRules
     {

@@ -51,6 +51,18 @@
                 <b>Spieler:</b>
                 <span id="players"></span>
               </div>
+
+              <div class="mb-2 d-flex align-items-center">
+                <label for="ttsServerSelect" class="mr-2 mb-0">Play sound for all players</label>
+                <div class="input-group">
+                  <select id="ttsServerSelect" class="form-control"></select>
+                  <div class="input-group-append">
+                    <button id="ttsServerPlay" class="btn btn-secondary" type="button">Play for all</button>
+                  </div>
+                </div>
+                
+              </div>
+
               <div id="messagesList" class="flex-grow-1 overflow-auto"></div>
               <form id="chatInput" class="input-group">
                   <input type="text" class="form-control" id="messageInput" />
@@ -309,6 +321,22 @@
           <input class="form-check-input" type="radio" name="handOptions" id="handOption3dFan" disabled>
           <label class="form-check-label" for="handOption3dFan">3D</label>
         </div>
+        <hr>
+        Text-to-Speech:
+        <br>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" id="ttsEnabled" checked>
+          <label class="form-check-label" for="ttsEnabled">Enable TTS (chat only)</label>
+        </div>
+        <div class="form-group mt-2">
+          <label for="ttsVoiceSelect">Voice</label>
+          <select id="ttsVoiceSelect" class="form-control"></select>
+        </div>
+        <div class="form-group">
+          <label for="ttsVolume">Volume</label>
+          <input id="ttsVolume" type="range" min="0" max="1" step="0.1" value="1" class="form-control-range" />
+        </div>
+        <!-- Server-audio moved to main chat area for quick access; removed duplicate here -->
       </div>
       <div class="modal-footer">
         <input type="submit" class="btn btn-primary" id="userSettingsSubmitButton" value="OK"/>
@@ -362,3 +390,4 @@
 
 <script src="~/js/signalr/dist/browser/signalr.js"></script>
 <script src="~/js/schafkopf.js"></script>
+<script src="~/js/tts.js"></script>

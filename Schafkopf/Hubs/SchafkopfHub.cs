@@ -5,14 +5,14 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Linq;
-using Schafkopf.Logic;
+using Schafkopf.GameState;
 
 namespace Schafkopf.Hubs
 {
     public class SchafkopfHub : Hub
     {
         public static Dictionary<String, Game> Games = new Dictionary<String, Game>();
-        public async Task SendChatMessage(string message)
+        public async Task SendChatMessage(string message, string voice)
         {
             Game game = ((Game)Context.Items["game"]);
             if (message == "/restart")
@@ -36,7 +36,17 @@ namespace Schafkopf.Hubs
             }
             foreach (String connectionId in game.GetPlayersConnectionIds())
             {
-                await Clients.Client(connectionId).SendAsync("ReceiveChatMessage", user, message);
+                await Clients.Client(connectionId).SendAsync("ReceiveChatMessage", user, message, voice);
+            }
+        }
+
+        public async Task BroadcastTtsFile(string url)
+        {
+            Game game = ((Game)Context.Items["game"]);
+            if (game == null) return;
+            foreach (String connectionId in game.GetPlayersConnectionIds())
+            {
+                await Clients.Client(connectionId).SendAsync("ReceivePlayTtsFile", url);
             }
         }
 

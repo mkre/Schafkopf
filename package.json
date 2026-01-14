@@ -1,0 +1,8 @@
+{
+  "name": "schafkopf-dev-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "schafkopf": "cd /workspaces/Schafkopf/Schafkopf && dotnet run"
+  }
+}
